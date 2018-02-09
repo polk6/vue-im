@@ -8,34 +8,21 @@ import Vuex from 'vuex';
 Vue.use(Vuex);
 export const imStore = new Vuex.Store({
     state: {
-        selectedChatEn: {
-            inputContent: '' // 输入框内容
-        }, // 选取的会话对象
-        currentChatEnlist: [], // 当前chat实体集合
+        selectedChatEn: null, // 选取的会话对象
+        currentChatEnlist: [{
+            userName: '张三',
+            inputContent: '',
+            msgList: [],
+            state: 'on',
+            lastMsgTime: new Date(),
+            lastMsgContent: '你好，我想咨询',
+            newMsgCount: 2,
+        }], // 当前chat实体集合
         notificationChatEnlist: [], // 通知chat实体集合
         changeSelectIMDelegate: null, // 更改选中im的委托
         haveNewMsgDelegate: null, // 当前已选中的用户含有新消息
-        lastMsgId: 0, // msgId
     },
     mutations: {
-        /**
-         * 设置显示imHistoryTableVisible
-         */
-        setIMHistoryTableVisible: function(state, payload) {
-            state.imHistoryTableVisible = false;
-            if (payload.value) {
-                state.imHistoryTableVisible = true;
-            }
-        },
-
-        /**
-         * 设置chat对象的im信息
-         * @param {Object} payload 载荷对象
-         * @param {String} payload.value 选中快捷回复内容
-         */
-        setShortcutReplyContent: function(state, payload) {
-            state.shortcutReplyContent = payload.value;
-        },
 
         /**
          * 添加chat对象
@@ -48,27 +35,15 @@ export const imStore = new Vuex.Store({
             var listName = payload.listName;
 
             // 1.公共属性
+            chatEn.chatId = Number.parseInt(Date.now() + Math.random());
             chatEn.msgList = [];
-            chatEn.inputContent = '';
-            chatEn.extendInfoLoaded = false; // 附加信息是否已记载，eg：工单、客户、预约回访，在第一次点击时历史会话时会加载这些
-            chatEn.imInfo_pageNumber = 1; // 点击加载历史消息时传递的pageNumber
-            chatEn.firstMsgLoaded = false; // 第一次点击会话时，要加载当前会话的历史消息
-            chatEn.haveHistoryMsg = true; // 含有历史消息
-
-            // 2.各自列表的特有属性
-            if (listName == 'currentChatEnlist') {
-                // 当前会话列表
-                chatEn.newMsgCount = 0;
-                chatEn.isFollow = false; // 是否关注
-                chatEn.lastMsgTime = '';
-                chatEn.answered = false; // 是否已应答
-                chatEn.isNewChat = true; // 是否为新会话
-                state[payload.listName].push(payload.chatEn);
-            } else {
-                // 非当前会话：历史会话、全部历史会话
-                chatEn.state = 'end';
-                state[payload.listName].unshift(payload.chatEn); // 放入到历史列表的第一个
-            }
+            chatEn.state = 'on';
+            chatEn.accessTime = new Date(); // 访问时间
+            chatEn.inputContent = ''; // 输入框内容
+            chatEn.newMsgCount = 0;
+            chatEn.isFollow = false; // 是否关注
+            chatEn.lastMsgTime = '';
+            state.currentChatEnlist.push(payload.chatEn);
         },
 
         /**
@@ -96,6 +71,7 @@ export const imStore = new Vuex.Store({
             // 排序规则：
             // 1)已关注放最前面，关注状态下按最后一条获取时间正序
             // 2)非关注状态下，按最后一条获取时间正序
+
             // 1.首先按最后一次更新时间排序
             for (var i = 0; i < enlist.length; i++) {
                 for (var j = i; j < enlist.length; j++) {
@@ -126,13 +102,6 @@ export const imStore = new Vuex.Store({
         },
 
         /**
-         * msgId自增
-         */
-        msgIdAdd: function(state, payload) {
-            state.msgId++;
-        },
-
-        /**
          * 清除通知chat
          */
         clearNotificationChat: function(state) {
@@ -145,236 +114,6 @@ export const imStore = new Vuex.Store({
          */
         init: function(context, payload) {
             context.dispatch('im_loadHistoryChatList');
-        },
-
-        /**
-         * 来电事件或者试呼事件
-         * @param {Object} rs 回调rs，含有如下成员
-         * @param jobId 唯一编号
-         * @param fromNumber 主叫号码
-         * @param toNumber 被叫号码
-         * @param serviceType conference,会议；replacecall,代答；intercept,监听；tutor,辅导；interpose,抢话旁听；transfer,呼转；demolished,抢话踢出
-         * @param callType  incall,客户入呼；innercall,座席内呼；imincall,消息内呼；outcall,直拨
-         * @param agentServiceID 座席服务ID
-         * @param phoneNumber 发起者号码
-         * @param url 应答地址
-         * @param mediaType
-         * @param customData
-         */
-        onInvite: function(context, { rs }) {
-            if ((rs.serviceType == 'init' || rs.serviceType == 'transferGroup') && rs.callType == 'imincall') {
-                // 直接调用【应答】
-                ak.Http.post({
-                    url: '/udesktop/im/answer.do',
-                    params: {
-                        agentId: window.agentId,
-                        companyId: window.companyId,
-                        clientId: rs.fromNumber,
-                        jobId: rs.jobId
-                    },
-                    successCallback: function(res) {
-                        console.log('imStore：-------- im_answer ---------');
-                        console.log(res);
-                    }
-                });
-            }
-        },
-
-        /**
-         * 建立通话事件
-         * @param {Object} rs 回调rs，含有如下成员
-         * @param jobId 唯一编号
-         * @param fromNumber 主叫号码
-         * @param toNumber 被叫号码
-         * @param serviceType conference,会议；replacecall,代答；intercept,监听；tutor,辅导；interpose,抢话旁听；transfer,呼转；demolished,抢话踢出
-         * @param callType  incall,客户入呼；innercall,座席内呼；imincall,消息内呼；outcall,直拨
-         * @param callSubType 子类型，innercall：内呼;manual:人工外呼; manualPreview:手动预览外呼; autoPreview:自动预览外呼; autoPreview:自动预测外呼; autoIvr:自动IVR外呼; autoFax:自动FAX外呼; offlineTest:离线外呼
-         * @param cusNumber 发起者
-         * @param customData
-         * @param agentServiceID 座席服务ID
-         * @param mediaType
-         */
-        onConnected: function(context, { rs }) {
-            if (rs.callType == 'imincall') {
-                // 1.存在于 currentChatEnlist 和 historyChatEnlist 历史会话集合里的会话，直接清除此会话；场景：会话接入 → 转接给客服b → 客服b又转接回来
-                // 1)当前会话
-                for (var i = 0; i < context.state.currentChatEnlist.length; i++) {
-                    var tmpEn = context.state.currentChatEnlist[i];
-                    if (tmpEn.imInfo_jobId == rs.jobId) {
-                        context.state.currentChatEnlist.splice(i, 1)[0];
-                        break;
-                    }
-                }
-
-                // 2)历史会话
-                for (var i = 0; i < context.state.historyChatEnlist.length; i++) {
-                    var tmpEn = context.state.historyChatEnlist[i];
-                    if (tmpEn.imInfo_jobId == rs.jobId) {
-                        context.state.historyChatEnlist.splice(i, 1)[0];
-                        break;
-                    }
-                }
-
-                // 2.初始化会话对象
-                var userId = rs.cusNumber.replace('|', ''); // [ie]1234567| => [ie]1234567
-                var userName = userId.replace(/\[.+?\]/g, '').replace(/.+?-/g, ''); // [ie]1234567 => 1234567
-                var chatEn = {
-                    userName: userName,
-                    inputContent: '',
-                    state: 'on',
-                    accessTime: new Date(), // 访问时间
-                    imInfo_clientId: userId, // 客户id
-                    imInfo_pageNumber: 1, // 加载历史记录的pageNumber
-                    imInfo_jobId: rs.jobId,
-                    imInfo_agentServiceID: rs.agentServiceID,
-                    imInfo_customData: rs.customData,
-                    imInfo_fromNumber: rs.fromNumber,
-                    imInfo_toNumber: rs.toNumber,
-                    imInfo_mediaType: rs.mediaType,
-                    imInfo_serviceType: rs.serviceType,
-                    imInfo_callType: rs.callType,
-                    imInfo_phoneNumber: rs.toNumber
-                };
-
-                // 3.添加到currentChatEnlist
-                context.commit('addChat', {
-                    listName: 'currentChatEnlist',
-                    chatEn: chatEn
-                });
-
-                // 4.获取之前存入的备注信息
-                for (var i = 0; i < context.state.tmpChatExtendsList.length; i++) {
-                    var item = context.state.tmpChatExtendsList[i];
-                    if (item.imInfo_jobId == chatEn.imInfo_jobId) {
-                        context.dispatch('extendChatEn', {
-                            imInfo_jobId: chatEn.imInfo_jobId,
-                            extends: item.extends
-                        });
-                        context.state.tmpChatExtendsList.splice(i, 1); // 清除
-                    }
-                }
-
-                // 5.添加一条接入信息
-                context.dispatch('addChatMsg', {
-                    imInfo_jobId: rs.jobId,
-                    msg: {
-                        role: 'sys',
-                        contentType: 'text',
-                        content: '有新的访客接入'
-                    }
-                });
-
-                // 6.若当前选中的会话就是此接入的会话(再一次转接回来)，那么就刷新selectChat
-                if (context.state.selectedChatEn.imInfo_jobId == rs.jobId) {
-                    context.state.selectedChatEn = Object.assign({});
-                    context.dispatch('selectChat', { imInfo_jobId: rs.jobId });
-                }
-
-                // 7.获取会话的姓名
-                // 1)获取客户资料Id
-                ak.Http.post({
-                    url: '/uticket/customer/getCustomerId.do',
-                    params: {
-                        webchat: chatEn.imInfo_clientId
-                    },
-                    successCallback: function(res) {
-                        var customerId = res.result.customerId;
-                        var userName = res.result.custname;
-                        if (userName == undefined) {
-                            // custname为 undefined，表示新客户
-                            context.dispatch('extendChatEn', {
-                                imInfo_jobId: chatEn.imInfo_jobId,
-                                extends: {
-                                    customerInfo_isNewCustomer: true
-                                }
-                            });
-                        } else {
-                            context.dispatch('extendChatEn', {
-                                imInfo_jobId: chatEn.imInfo_jobId,
-                                extends: {
-                                    userName: userName,
-                                    customerInfo_isNewCustomer: false
-                                }
-                            });
-                        }
-
-                        // 2)加入浏览器通知
-                        context.dispatch('getChatEnByJobId', { imInfo_jobId: rs.jobId }).then(chatEn => {
-                            context.dispatch('addNotificationChat', {
-                                chatEn: chatEn,
-                                oprType: 'chat'
-                            });
-                        });
-                    }
-                });
-            }
-        },
-
-        /**
-         * 状态管理
-         * @param {Object} rs 回调rs，含有如下成员
-         */
-        Agent_OnStatusManageAll: function(context, { rs }) {
-            // 1.im来电
-            if (rs.msg.callType == 'imincall' && rs.event == 'incoming') {
-                // 1)接入
-                if (rs.msg.type == 'speak') {
-                    // im客户端接通后，获取客户来源信息
-                    var cus_info = JSON.parse(rs.msg.remarks).cus_info;
-                    if (cus_info) {
-                        // 当前会话还没有连接，存入临时会话扩展集合里
-                        context.state.tmpChatExtendsList.push({
-                            imInfo_jobId: rs.msg.jobId,
-                            extends: {
-                                sourceInfo_fromLinkName: cus_info.sourceInfo_fromLinkName,
-                                sourceInfo_fromLink: cus_info.sourceInfo_fromLink,
-                                sourceInfo_os: cus_info.sourceInfo_os,
-                                sourceInfo_city: cus_info.sourceInfo_city,
-                                sourceInfo_way: cus_info.sourceInfo_way // 来源
-                            }
-                        });
-                    }
-                } else if (rs.msg.type == 'hangup') {
-                    // 2)im客户端挂断：不管是客户端先挂断、还是座席端结束会话，都会回调此接口。
-                    // rs.msg.reason == 'byebyas'表示客户端挂断,byebyagentweb表示座席端挂断
-                    context.dispatch('getChatEnByJobId', { imInfo_jobId: rs.msg.jobId }).then(chatEn => {
-                        // 修改状态
-                        if (chatEn.state != 'end') {
-                            context
-                                .dispatch('extendChatEn', {
-                                    imInfo_jobId: chatEn.imInfo_jobId,
-                                    extends: {
-                                        state: 'off',
-                                        inputContent: ''
-                                    }
-                                })
-                                .then(() => {
-                                    if (context.state.selectedChatEn.imInfo_jobId == chatEn.imInfo_jobId) {
-                                        context.commit('triggerChangeSelectIMDelegate');
-                                    }
-                                });
-                        }
-                        // 显示信息
-                        context.dispatch('addChatMsg', {
-                            imInfo_jobId: chatEn.imInfo_jobId,
-                            msg: {
-                                role: 'sys',
-                                contentType: 'text',
-                                content: '会话结束',
-                                showTime: true
-                            }
-                        });
-                        // 清除消息中的预输入
-                        for (var i = 0; i < chatEn.msgList.length; i++) {
-                            var item = chatEn.msgList[i];
-                            if (item.contentType == 'preInput') {
-                                chatEn.msgList.splice(i, 1);
-                                break;
-                            }
-                        }
-                    });
-                }
-            }
         },
 
         /**
@@ -396,7 +135,7 @@ export const imStore = new Vuex.Store({
                     return;
                 }
                 context.dispatch('addChatMsg', {
-                    imInfo_jobId: rs.msg.jobId,
+                    chatId: rs.msg.jobId,
                     msg: {
                         role: 'client',
                         contentType: 'text',
@@ -414,7 +153,7 @@ export const imStore = new Vuex.Store({
                 // end TOTO
 
                 context.dispatch('addChatMsg', {
-                    imInfo_jobId: rs.msg.jobId,
+                    chatId: rs.msg.jobId,
                     msg: {
                         role: 'client',
                         contentType: 'image',
@@ -448,7 +187,7 @@ export const imStore = new Vuex.Store({
                 // end TODO
 
                 context.dispatch('addChatMsg', {
-                    imInfo_jobId: rs.msg.jobId,
+                    chatId: rs.msg.jobId,
                     msg: {
                         role: 'client',
                         contentType: 'file',
@@ -461,7 +200,7 @@ export const imStore = new Vuex.Store({
                 // 临时文本
                 if (rs.msg.message == '[none]') {
                     // [none]为预定的协议，表示清空预输入
-                    context.dispatch('getChatEnByJobId', { imInfo_jobId: rs.msg.jobId }).then(chatEn => {
+                    context.dispatch('getChatEnByChatId', { chatId: rs.msg.jobId }).then(chatEn => {
                         for (var i = 0; i < chatEn.msgList.length; i++) {
                             var item = chatEn.msgList[i];
                             if (item.contentType == 'preInput') {
@@ -472,7 +211,7 @@ export const imStore = new Vuex.Store({
                     });
                 } else {
                     context.dispatch('addChatMsg', {
-                        imInfo_jobId: rs.msg.jobId,
+                        chatId: rs.msg.jobId,
                         msg: {
                             role: 'client',
                             contentType: 'preInput',
@@ -504,7 +243,7 @@ export const imStore = new Vuex.Store({
         /**
          * im发送
          * @param {Object} payload object
-         * @param {String} payload.imInfo_jobId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
+         * @param {String} payload.chatId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
          * @param {Stirng} payload.contentType 内容类型；text：文本；image：图片
          * @param {Stirng} payload.content 需要发送的内容
          * @param {Stirng} payload.fileFieldName 上传文件时的input name
@@ -512,7 +251,7 @@ export const imStore = new Vuex.Store({
          * @param {Function} payload.successCallbcak 成功发送的回调
          */
         im_send: function(context, payload) {
-            context.dispatch('getChatEnByJobId', { imInfo_jobId: payload.imInfo_jobId }).then(chatEn => {
+            context.dispatch('getChatEnByChatId', { chatId: payload.chatId }).then(chatEn => {
                 var value = payload.content;
                 // 1.文本消息
                 if (payload.contentType == 'text') {
@@ -522,7 +261,7 @@ export const imStore = new Vuex.Store({
                             agentId: window.agentId,
                             companyId: window.companyId,
                             clientId: chatEn.imInfo_fromNumber,
-                            jobId: chatEn.imInfo_jobId,
+                            jobId: chatEn.chatId,
                             message: value
                         },
                         successCallback: function(res) {
@@ -538,7 +277,7 @@ export const imStore = new Vuex.Store({
                             agentId: window.agentId,
                             companyId: window.companyId,
                             clientId: chatEn.imInfo_fromNumber,
-                            jobId: chatEn.imInfo_jobId,
+                            jobId: chatEn.chatId,
                             message: value.replace(/^data:image\/(png|jpg);base64,/, '')
                         },
                         successCallback: function(res) {
@@ -551,7 +290,7 @@ export const imStore = new Vuex.Store({
                             smallImgUrl = smallImgUrl.replace(/http:\/\/(.+?)\//g, stateStore.getters.accountInfo.ipcc_url + '/');
                             // end
                             context.dispatch('addChatMsg', {
-                                imInfo_jobId: chatEn.imInfo_jobId,
+                                chatId: chatEn.chatId,
                                 msg: {
                                     role: 'server',
                                     contentType: 'image',
@@ -568,7 +307,7 @@ export const imStore = new Vuex.Store({
                     var params = {
                         agentId: window.agentId,
                         companyId: window.companyId,
-                        jobId: chatEn.imInfo_jobId,
+                        jobId: chatEn.chatId,
                         fromNumber: chatEn.imInfo_toNumber,
                         toNumber: chatEn.imInfo_fromNumber
                     };
@@ -611,73 +350,15 @@ export const imStore = new Vuex.Store({
         },
 
         /**
-         * 发送满意度
-         * @param {String} payload.imInfo_jobId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
-         */
-        im_sendMYD: function(context, payload) {
-            context.dispatch('getChatEnByJobId', { imInfo_jobId: payload.imInfo_jobId }).then(chatEn => {
-                // 满意度回调
-                ak.Http.post({
-                    url: '/udesktop/im/satisfaction/send.do',
-                    params: {
-                        agentId: window.agentId,
-                        companyId: window.companyId,
-                        clientId: chatEn.imInfo_fromNumber,
-                        jobId: chatEn.imInfo_jobId
-                    },
-                    successCallback: function(res) {
-                        // 1.显示满意度发送信息
-                        context.dispatch('addChatMsg', {
-                            imInfo_jobId: chatEn.imInfo_jobId,
-                            msg: {
-                                role: 'sys',
-                                contentType: 'text',
-                                content: '已发送满意度评价的邀请',
-                                showTime: true
-                            }
-                        });
-                        // 2.调用结束会话
-                        context.dispatch('im_end', {
-                            imInfo_jobId: chatEn.imInfo_jobId
-                        });
-                    }
-                });
-            });
-        },
-
-        /**
-         * 结束会话(挂机)
-         * @param {String} payload.imInfo_jobId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
-         * @param {Function} payload.successCallback 回调
-         */
-        im_end: function(context, payload) {
-            context.dispatch('getChatEnByJobId', { imInfo_jobId: payload.imInfo_jobId }).then(chatEn => {
-                ak.Http.post({
-                    url: '/udesktop/ipcc/hangup.do',
-                    params: {
-                        hangupCode: '',
-                        ivrNumber: '',
-                        jobId: chatEn.imInfo_jobId,
-                        phoneNumber: 'sip:' + window.agentId + '@u3c.com'
-                    },
-                    successCallback: function(res) {
-                        // 回调：Agent_OnStatusManageAll，里面执行了关闭会话状态
-                        payload.successCallback && payload.successCallback(res);
-                    }
-                });
-            });
-        },
-
-        /**
          * 关闭会话
-         * @param {String} payload.imInfo_jobId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
+         * @param {String} payload.chatId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
          */
         im_close: function(context, payload) {
-            context.dispatch('getChatEnByJobId', { imInfo_jobId: payload.imInfo_jobId }).then(chatEn => {
+            context.dispatch('getChatEnByChatId', { chatId: payload.chatId }).then(chatEn => {
                 ak.Http.post({
                     url: '/udesktop/ipcc/workRoundUp.do',
                     params: {
-                        jobId: chatEn.imInfo_jobId,
+                        jobId: chatEn.chatId,
                         agentId: 'sip:' + window.agentId + '@u3c.com'
                     },
                     ignoreFail: true,
@@ -685,14 +366,14 @@ export const imStore = new Vuex.Store({
                         var currentIndex = 0;
                         var nextIndex = 0;
                         var state = context.state;
-                        var imInfo_jobId = chatEn.imInfo_jobId;
+                        var chatId = chatEn.chatId;
                         // 1.关闭当前会话，并移到【历史会话列表】里
                         for (var i = 0; i < state.currentChatEnlist.length; i++) {
                             var tmpEn = state.currentChatEnlist[i];
-                            if (tmpEn.imInfo_jobId == imInfo_jobId) {
+                            if (tmpEn.chatId == chatId) {
                                 currentIndex = i;
                                 context.dispatch('extendChatEn', {
-                                    imInfo_jobId: tmpEn.imInfo_jobId,
+                                    chatId: tmpEn.chatId,
                                     extends: {
                                         state: 'end'
                                     }
@@ -716,8 +397,8 @@ export const imStore = new Vuex.Store({
                         }
 
                         // 3.选中
-                        if (nextChatEn && nextChatEn.imInfo_jobId) {
-                            context.dispatch('selectChat', { imInfo_jobId: nextChatEn.imInfo_jobId });
+                        if (nextChatEn && nextChatEn.chatId) {
+                            context.dispatch('selectChat', { chatId: nextChatEn.chatId });
                         }
                     }
                 });
@@ -725,61 +406,11 @@ export const imStore = new Vuex.Store({
         },
 
         /**
-         * 加载历史会话记录
-         */
-        im_loadHistoryChatList: function(context, payload) {
-            context.state.historyChatEnlist = []; // 先清空
-            ak.Http.post({
-                url: '/udesktop/im/history/list.do',
-                params: {
-                    agentId: window.agentId,
-                    companyId: window.companyId
-                },
-                successCallback: function(res) {
-                    var enlist = res.result.data;
-                    for (var i = 0; i < enlist.length; i++) {
-                        var en = enlist[i];
-                        // 1.设置消息
-                        // 消息时间
-                        var dt = new Date();
-                        dt.setHours(en.time.split(':')[0]);
-                        dt.setMinutes(en.time.split(':')[1]);
-                        dt.setSeconds(en.time.split(':')[2]);
-
-                        // 最后一条消息内容
-                        var msgContent = en.msg;
-                        if (en.type == '1') {
-                            msgContent = '[图片]';
-                        } else if (en.type == '2') {
-                            msgContent = '[文件]';
-                        }
-
-                        // 2.添加到历史会话里
-                        var chatEn = {
-                            imInfo_jobId: en.jobId,
-                            imInfo_fromNumber: en.fromNumber,
-                            imInfo_clientId: en.clientId,
-                            customerInfo_customerId: en.cusId,
-                            userName: en.name,
-                            sourceInfo_way: en.way,
-                            lastMsgTime: ak.Utils.getDateTimeStr(dt, 'H:i:s'),
-                            lastMsgContent: msgContent
-                        };
-                        context.commit('addChat', {
-                            chatEn: chatEn,
-                            listName: 'historyChatEnlist'
-                        });
-                    }
-                }
-            });
-        },
-
-        /**
          * 根据jobId获取chat对象
-         * @param {String} imInfo_jobId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
+         * @param {String} chatId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
          * @param {String} listName 指定的集合名称；e.g. currentChatEnlist、historyChatEnlist、allHistoryChatEnlist
          */
-        getChatEnByJobId: function(context, { imInfo_jobId, listName }) {
+        getChatEnByChatId: function(context, { chatId, listName }) {
             var chatEn = null;
 
             if (listName) {
@@ -787,7 +418,7 @@ export const imStore = new Vuex.Store({
                 var targetList = context.state[listName];
                 for (var i = 0; i < targetList.length; i++) {
                     var tmpEn = targetList[i];
-                    if (tmpEn.imInfo_jobId == imInfo_jobId) {
+                    if (tmpEn.chatId == chatId) {
                         chatEn = tmpEn;
                         break;
                     }
@@ -797,7 +428,7 @@ export const imStore = new Vuex.Store({
                 // 1)从当前会话列表查找
                 for (var i = 0; i < context.state.currentChatEnlist.length; i++) {
                     var tmpEn = context.state.currentChatEnlist[i];
-                    if (tmpEn.imInfo_jobId == imInfo_jobId) {
+                    if (tmpEn.chatId == chatId) {
                         chatEn = tmpEn;
                         break;
                     }
@@ -807,7 +438,7 @@ export const imStore = new Vuex.Store({
                 if (chatEn == null) {
                     for (var i = 0; i < context.state.historyChatEnlist.length; i++) {
                         var tmpEn = context.state.historyChatEnlist[i];
-                        if (tmpEn.imInfo_jobId == imInfo_jobId) {
+                        if (tmpEn.chatId == chatId) {
                             chatEn = tmpEn;
                             break;
                         }
@@ -818,7 +449,7 @@ export const imStore = new Vuex.Store({
                 if (chatEn == null) {
                     for (var i = 0; i < context.state.allHistoryChatEnlist.length; i++) {
                         var tmpEn = context.state.allHistoryChatEnlist[i];
-                        if (tmpEn.imInfo_jobId == imInfo_jobId) {
+                        if (tmpEn.chatId == chatId) {
                             chatEn = tmpEn;
                             break;
                         }
@@ -832,11 +463,11 @@ export const imStore = new Vuex.Store({
         /**
          * 修改Chat对象的属性
          * @param {Object} payload 载荷对象
-         * @param {Object} payload.imInfo_jobId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
+         * @param {Object} payload.chatId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
          * @param {Array} payload.extends Chat需要变更的属性对象数组
          */
         extendChatEn: function(context, payload) {
-            return context.dispatch('getChatEnByJobId', { imInfo_jobId: payload.imInfo_jobId }).then(chatEn => {
+            return context.dispatch('getChatEnByChatId', { chatId: payload.chatId }).then(chatEn => {
                 // 1.若没有，就附加到当前会话列表里
                 if (chatEn == null) {
                     return;
@@ -848,7 +479,7 @@ export const imStore = new Vuex.Store({
                 }
 
                 // 3.若选中的当前chatEn 与 传入的一直，更新选中额chatEn
-                if (context.state.selectedChatEn.imInfo_jobId == chatEn.imInfo_jobId) {
+                if (context.state.selectedChatEn.chatId == chatEn.chatId) {
                     context.state.selectedChatEn = Object.assign({}, chatEn);
                     Vue.nextTick(function() {});
                 }
@@ -859,7 +490,7 @@ export const imStore = new Vuex.Store({
         /**
          * 添加chat对象的msg
          * @param {Object} payload 载荷对象
-         * @param {String} payload.imInfo_jobId 会话Id
+         * @param {String} payload.chatId 会话Id
          * @param {String} payload.chatEn 会话对象，默认为state.chatEn
          * @param {Object} payload.msg 消息对象；eg：{role:'sys',content:'含有新的消息'}
          * @param {String} payload.msg.role 消息所有者身份；eg：'sys'系统消息；
@@ -939,7 +570,7 @@ export const imStore = new Vuex.Store({
                 }
             }
 
-            context.dispatch('getChatEnByJobId', { imInfo_jobId: payload.imInfo_jobId }).then(chatEn => {
+            context.dispatch('getChatEnByChatId', { chatId: payload.chatId }).then(chatEn => {
                 if (chatEn == null) {
                     return;
                 }
@@ -1055,7 +686,7 @@ export const imStore = new Vuex.Store({
                     }
                 }
                 // 更新列表
-                if (chatEn.imInfo_jobId == context.state.selectedChatEn.imInfo_jobId) {
+                if (chatEn.chatId == context.state.selectedChatEn.chatId) {
                     // 当前已选中的会话来了新消息，直接过滤
                     context.state.selectedChatEn = Object.assign({}, chatEn);
 
@@ -1093,31 +724,24 @@ export const imStore = new Vuex.Store({
 
         /**
          * 选中会话
-         * @param {String} imInfo_jobId 选中会话Id
+         * @param {String} chatId 选中会话Id
          */
-        selectChat: function(context, { imInfo_jobId }) {
-            context.dispatch('getChatEnByJobId', { imInfo_jobId: imInfo_jobId }).then(chatEn => {
+        selectChat: function(context, { chatId }) {
+            context.dispatch('getChatEnByChatId', { chatId: chatId }).then(chatEn => {
                 var state = context.state;
                 chatEn.newMsgCount = 0; // 设置新消息为0
                 // 1.设置当前选中的会话
                 context.state.selectedChatEn = Object.assign({}, chatEn);
-                // 1)刷新当前会话集合
+
+                // 2.刷新当前会话集合
                 for (var i = 0; i < state.currentChatEnlist.length; i++) {
                     var tmpEn = state.currentChatEnlist[i];
-                    if (tmpEn.imInfo_jobId == chatEn.imInfo_jobId) {
+                    if (tmpEn.chatId == chatEn.chatId) {
                         state.currentChatEnlist[i] = state.selectedChatEn;
                         break;
                     }
                 }
 
-                // 2)刷新历史会话集合
-                for (var i = 0; i < state.historyChatEnlist.length; i++) {
-                    var tmpEn = state.historyChatEnlist[i];
-                    if (tmpEn.imInfo_jobId == chatEn.imInfo_jobId) {
-                        state.historyChatEnlist[i] = state.selectedChatEn;
-                        break;
-                    }
-                }
                 context.commit('triggerChangeSelectIMDelegate');
                 context.dispatch('refreshMenuOfMsgCount');
             });
@@ -1133,7 +757,6 @@ export const imStore = new Vuex.Store({
                     allNewMsgCount += item.newMsgCount;
                 }
             });
-            baseStore.commit('setOnlineAdvisoryNewMsg', { onlineAdvisoryNewMsg: allNewMsgCount });
         },
 
         /**
@@ -1150,7 +773,7 @@ export const imStore = new Vuex.Store({
 
             // 1.判断当前通知集合里是否已存在次会话，若已存在去除此会话
             for (var i = 0; i < state.notificationChatEnlist.length; i++) {
-                if (state.notificationChatEnlist[i].imInfo_jobId == chatEn.imInfo_jobId) {
+                if (state.notificationChatEnlist[i].chatId == chatEn.chatId) {
                     state.notificationChatEnlist.splice(i, 1);
                     break;
                 }
@@ -1163,7 +786,7 @@ export const imStore = new Vuex.Store({
 
             // 3.转换后加入到当前通知集合里
             var tmpChatEn = {
-                imInfo_jobId: chatEn.imInfo_jobId,
+                chatId: chatEn.chatId,
                 sourceInfo_way: chatEn.sourceInfo_way,
                 site: window.location.host
             };
@@ -1197,7 +820,7 @@ export const imStore = new Vuex.Store({
                 const item = state.notificationChatEnlist[i];
                 // 1)已存在的通知列表是否包含此会话，若存在就关闭并移除
                 for (var j = 0; j < window.imStore_notificationList.length; j++) {
-                    if (window.imStore_notificationList[j].data == item.imInfo_jobId) {
+                    if (window.imStore_notificationList[j].data == item.chatId) {
                         window.imStore_notificationList[j].close();
                         break;
                     }
@@ -1206,7 +829,7 @@ export const imStore = new Vuex.Store({
                 // 2)创建新的通知
                 const notification = new Notification(item.title, {
                     body: item.content,
-                    data: item.imInfo_jobId,
+                    data: item.chatId,
                     tag: Date.now(),
                     icon: ak.BLL.getPngFromWay(item.sourceInfo_way)
                 });
@@ -1214,7 +837,7 @@ export const imStore = new Vuex.Store({
                     window.focus();
                     window.intVue.$router.push('im');
                     context.commit('clearNotificationChat');
-                    context.dispatch('selectChat', { imInfo_jobId: item.imInfo_jobId });
+                    context.dispatch('selectChat', { chatId: item.chatId });
                     notification.close();
                     imStore_notificationList = [];
                 };
@@ -1222,7 +845,7 @@ export const imStore = new Vuex.Store({
                 notification.onclose = function(e) {
                     // remove en
                     for (var i = 0; i < state.notificationChatEnlist.length; i++) {
-                        if (state.notificationChatEnlist[i].imInfo_jobId == item.imInfo_jobId) {
+                        if (state.notificationChatEnlist[i].chatId == item.chatId) {
                             state.notificationChatEnlist.splice(i, 1);
                             break;
                         }
@@ -1246,13 +869,13 @@ export const imStore = new Vuex.Store({
 
         /**
          * 会话是否在当前会话列表内
-         * @param {String} imInfo_jobId 选中会话Id
+         * @param {String} chatId 选中会话Id
          */
-        isChatInCurrentList: function(context, { imInfo_jobId }) {
+        isChatInCurrentList: function(context, { chatId }) {
             var exists = false;
             for (var i = 0; i < context.state.currentChatEnlist.length; i++) {
                 var tmpEn = context.state.currentChatEnlist[i];
-                if (tmpEn.imInfo_jobId == imInfo_jobId) {
+                if (tmpEn.chatId == chatId) {
                     exists = true;
                     break;
                 }

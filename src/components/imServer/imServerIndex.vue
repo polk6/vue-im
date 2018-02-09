@@ -2,8 +2,8 @@
 <template>
     <div class="imServerIndex-wrapper">
         <div class="imServerIndex-main">
-            <im-record class="item im-record"></im-record>
-            <im-chat class="item im-chat"></im-chat>
+            <im-record class="item im-record" @selectedChat="selectedChat()"></im-record>
+            <im-chat v-if="storeSelectedChatEn!=null" class="item im-chat"></im-chat>
         </div>
     </div>
 </template>
@@ -20,34 +20,36 @@ export default {
     data() {
         return {};
     },
-    computed: {},
-    watch: {
-        /**
-         * 重新选中了im
-         */
-        storeChangeSelectIMDelegate: function(value) {
-            this.selectedChatEn();
+    computed: {
+        storeSelectedChatEn() {
+            return this.$store.imStore.getters.selectedChatEn;
         }
     },
+    watch: {},
     methods: {
         /**
          * 选中了会话
          */
-        selectedChatEn: function() {}
+        selectedChat: function() {
+            console.log(123);
+        }
     },
     mounted() {}
 };
 </script>
 
 <style lang="less">
+@import '../../common/css/base.less';
+
 .imServerIndex-wrapper {
-    position: initial;
-    float: left;
-    height: calc(~'100% - 50px');
+    #common-wrapper();
+}
+
+.imServerIndex-wrapper {
     width: 100%;
-    min-width: 1100px;
-    overflow-x: hidden;
-    overflow-y: auto;
+    height: 100%;
+    position: absolute;
+    overflow: hidden;
     .imServerIndex-main {
         height: 100%;
         max-width: 100%;
@@ -61,7 +63,7 @@ export default {
             width: 280px;
         }
         & > .im-chat {
-            width: calc(~'99% - 280px - 330px'); // min-width: 600px;
+            width: calc(~'99% - 280px');
         }
     }
 }
