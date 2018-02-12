@@ -1,12 +1,13 @@
 /*!
- *  im会话管理
+ *  im服务端Store
  */
 
 import Vue from 'vue';
 import Vuex from 'vuex';
+import ak from '@/common/ak.js';
 
 Vue.use(Vuex);
-export const imStore = new Vuex.Store({
+export const imServerStore = new Vuex.Store({
     state: {
         selectedChatEn: null, // 选取的会话对象
         currentChatEnlist: [{
@@ -43,6 +44,7 @@ export const imStore = new Vuex.Store({
             chatEn.newMsgCount = 0;
             chatEn.isFollow = false; // 是否关注
             chatEn.lastMsgTime = '';
+            chatEn.lastMsgShowTime = null; // 最后一个消息的显示时间
             state.currentChatEnlist.push(payload.chatEn);
         },
 
@@ -52,14 +54,6 @@ export const imStore = new Vuex.Store({
          */
         triggerChangeSelectIMDelegate: function(state, payload) {
             state.changeSelectIMDelegate = Date.now();
-        },
-
-        /**
-         * 触发已选中的会话含有新内容
-         * @param {Object} payload 载荷对象
-         */
-        triggerHaveNewMsgDelegate: function(state, payload) {
-            state.haveNewMsgDelegate = Date.now();
         },
 
         /**
@@ -112,9 +106,7 @@ export const imStore = new Vuex.Store({
         /**
          * 初始化
          */
-        init: function(context, payload) {
-            context.dispatch('im_loadHistoryChatList');
-        },
+        init: function(context, payload) {},
 
         /**
          * 坐席间即时消息
@@ -223,24 +215,6 @@ export const imStore = new Vuex.Store({
         },
 
         /**
-         * im登录
-         */
-        im_login: function(context, payload) {
-            window.imStore_setInterval = setInterval(function() {
-                if ($.agentBar.login) {
-                    $.agentBar.login(window.agentId, 'ready', 0, true, function(rs) {
-                        console.log('imStore：-------- im_login ---------');
-                        console.log(rs);
-                        context.state.imInfo = {
-                            agentId: rs.agentId
-                        };
-                    });
-                    clearInterval(window.imStore_setInterval);
-                }
-            }, 1000);
-        },
-
-        /**
          * im发送
          * @param {Object} payload object
          * @param {String} payload.chatId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
@@ -265,7 +239,7 @@ export const imStore = new Vuex.Store({
                             message: value
                         },
                         successCallback: function(res) {
-                            console.log('imStore：-------- im_send_text ---------');
+                            console.log('imServerStore：-------- im_send_text ---------');
                             payload.successCallbcak && payload.successCallbcak();
                         }
                     });
@@ -281,7 +255,7 @@ export const imStore = new Vuex.Store({
                             message: value.replace(/^data:image\/(png|jpg);base64,/, '')
                         },
                         successCallback: function(res) {
-                            console.log('imStore：-------- im_send_image ---------');
+                            console.log('imServerStore：-------- im_send_image ---------');
                             console.log(res);
                             var imgUrl = res.result.resultPath.begin;
                             var smallImgUrl = res.result.resultPath.end;
@@ -489,185 +463,51 @@ export const imStore = new Vuex.Store({
 
         /**
          * 添加chat对象的msg
-         * @param {Object} payload 载荷对象
-         * @param {String} payload.chatId 会话Id
-         * @param {String} payload.chatEn 会话对象，默认为state.chatEn
-         * @param {Object} payload.msg 消息对象；eg：{role:'sys',content:'含有新的消息'}
-         * @param {String} payload.msg.role 消息所有者身份；eg：'sys'系统消息；
-         * @param {String} payload.msg.contentType 消息类型；text:文本(默认)；image:图片
-         * @param {String} payload.msg.content 消息内容
-         * @param {Date} payload.msg.createTime 消息创建时间
-         * @param {Boolean} payload.msg.isNewMsg 是否新的消息，默认为true
-         * @param {String} payload.msg.state 消息状态,success:发送成功；false：失败
-         * @param {Boolean} payload.msg.showTime 'sys'消息前面是否显示时间，默认为false
-         * @param {Boolean} payload.msg.isHistoryMsg 是否历史消息
-         * @param {Object} payload.msg.historyMsg 历史消息对象
+         * @param {String} chatId 会话Id
+         * @param {Object} msg 消息对象；eg：{role:'sys',content:'含有新的消息'}
+         * @param {String} msg.role 消息所有者身份；eg：'sys'系统消息；
+         * @param {String} msg.contentType 消息类型；text:文本(默认)；image:图片
+         * @param {String} msg.content 消息内容
          */
-        addChatMsg: function(context, payload) {
-            var msg = payload.msg || {};
-            // 设定默认值
-            msg.contentType = msg.contentType == undefined ? 'text' : msg.contentType;
-            msg.createTime = msg.createTime == undefined ? new Date() : msg.createTime;
-            msg.isNewMsg = msg.isNewMsg == undefined ? true : msg.isNewMsg;
-            msg.state = msg.state == undefined ? 'success' : msg.state;
-            msg.showTime = msg.showTime == undefined ? false : msg.showTime;
-            msg.id = context.state.lastMsgId;
-            msg.name = '我'; // 消息上需要显示客服的姓名，若此消息为当前客服，显示'我'
-            context.commit('msgIdAdd');
-
-            // 历史数据
-            if (payload.isHistoryMsg) {
-                var historyMsg = payload.historyMsg;
-                // 消息时间
-                msg.createTime = new Date(historyMsg.begintime);
-                // 设置角色
-                if (historyMsg.type == 'question') {
-                    msg.role = 'client';
-                } else if (historyMsg.type == 'answer') {
-                    msg.role = 'server';
-
-                    // 客服名称：转接过的im会显示接待的客服名称
-                    msg.name = historyMsg.name;
-                    if (msg.name == stateStore.getters.accountInfo.realName) {
-                        // 当前客服回复的消息，客服名称显示'我'
-                        msg.name = '我';
-                    }
-                }
-                // 非新消息
-                msg.isNewMsg = false;
-
-                // 解析消息类型
-                if (historyMsg.contentType == '0') {
-                    // 文本
-                    msg.contentType = 'text';
-                    msg.content = historyMsg.content;
-                } else if (historyMsg.contentType == '1') {
-                    // 图片
-                    var imgArray = historyMsg.content.split('|');
-                    var imgUrl = historyMsg.url + '/' + imgArray[0];
-                    var smallImgUrl = historyMsg.url + '/' + imgArray[1];
-                    // // TODO 替换域名前缀 http://120.55.88.191:10080
-                    // imgUrl = imgUrl.replace(/http:\/\/(.+?)\//g, stateStore.getters.accountInfo.ipcc_url + '/');
-                    // smallImgUrl = smallImgUrl.replace(/http:\/\/(.+?)\//g, stateStore.getters.accountInfo.ipcc_url + '/');
-                    // // end TOTO
-                    msg.contentType = 'image';
-                    msg.content = '[图片]';
-                    msg.imgUrl = imgUrl;
-                    msg.smallImgUrl = smallImgUrl;
-                } else if (historyMsg.contentType == '2') {
-                    // 文件
-                    var fileUrl = historyMsg.url + '/' + historyMsg.content;
-                    var fileName = historyMsg.content.substr(32);
-                    // // TODO 替换域名前缀 http://120.55.88.191:10080
-                    // fileUrl = fileUrl.replace(/http:\/\/(.+?)\//g, stateStore.getters.accountInfo.ipcc_url + '/');
-                    // // end TODO
-                    msg.contentType = 'file';
-                    msg.content = '[文件]';
-                    msg.fileName = fileName;
-                    msg.fileUrl = fileUrl;
-                } else if (historyMsg.contentType == '3') {
-                    contentType = 'voice';
-                }
-            }
-
-            context.dispatch('getChatEnByChatId', { chatId: payload.chatId }).then(chatEn => {
+        addChatMsg: function(context, { chatId, msg }) {
+            context.dispatch('getChatEnByChatId', { chatId: chatId }).then(chatEn => {
                 if (chatEn == null) {
                     return;
                 }
 
+                // 1.设定默认值
+                msg.createTime = msg.createTime == undefined ? new Date() : msg.createTime;
+                msg.isNewMsg = msg.isNewMsg == undefined ? true : msg.isNewMsg;
+
                 var msgList = chatEn.msgList ? chatEn.msgList : [];
 
-                // 1.对非系统消息进行转换处理
-                // time自定义日期对象
-                var time = new Date();
-                if (msg.createTime) {
-                    time = new Date(msg.createTime);
-                }
-                var createTimeObj = {}; // 返回的对象，包含了 year(年)、month(月)、day(日)
-                createTimeObj.yyyy = time.getFullYear(); // 年
-                createTimeObj.MM = time.getMonth() + 1 < 10 ? '0' + (time.getMonth() + 1) : time.getMonth() + 1; // 月
-                createTimeObj.dd = time.getDate() < 10 ? '0' + time.getDate() : time.getDate(); // 日期
-                createTimeObj.HH = time.getHours() < 10 ? '0' + time.getHours() : time.getHours();
-                createTimeObj.mm = time.getMinutes() < 10 ? '0' + time.getMinutes() : time.getMinutes();
-                createTimeObj.ss = time.getSeconds() < 10 ? '0' + time.getSeconds() : time.getSeconds();
-                if (msg.role != 'sys') {
-                    // 非今年的日期，显示年月日
-                    var yyyyMMddStr = '一一一一　' + createTimeObj.yyyy + '/' + createTimeObj.MM + '/' + createTimeObj.dd + '　一一一一';
-                    if ((createTimeObj.yyyy = new Date().getFullYear)) {
-                        // 今年显示：月/日
-                        yyyyMMddStr = createTimeObj.MM + '/' + createTimeObj.dd;
-                    }
-
-                    // 3.新消息：若已在前方展示过日期就无需再展示
-                    if (msg.isNewMsg) {
-                        var isExistsOfyyyyMMdd = false; // 是否已存在日期信息
-                        for (var i = 0; i < msgList.length; i++) {
-                            var item = msgList[i];
-                            if (item.role == 'sys' && item.content.indexOf(yyyyMMddStr) >= 0) {
-                                isExistsOfyyyyMMdd = true;
-                                break;
-                            }
-                        }
-                        // 1)当前消息列表不存在日期，就添加上去
-                        if (!isExistsOfyyyyMMdd) {
-                            msgList.push({
-                                role: 'sys',
-                                contentType: 'text',
-                                content: yyyyMMddStr
-                            });
-                        }
-
-                        // 2)若消息为'输入预知'的，先要删除已存在的
-                        for (var i = 0; i < msgList.length; i++) {
-                            var item = msgList[i];
-                            if (item.contentType == 'preInput') {
-                                msgList.splice(i, 1);
-                                break;
-                            }
-                        }
-
-                        // 3)显示具体消息
-                        msgList.push(msg);
-                    } else {
-                        // 4.旧消息：若已存在此日期，将删掉此日期，并在消息列表的最前方插入日期
-                        for (var i = 0; i < msgList.length; i++) {
-                            var item = msgList[i];
-                            if (item.role == 'sys' && item.content.indexOf(yyyyMMddStr) >= 0) {
-                                msgList.splice(i, 1);
-                                break;
-                            }
-                        }
-
-                        // 1)显示具体消息
-                        msgList.unshift(msg);
-
-                        // 2)显示日期
-                        msgList.unshift({
+                // 2.插入消息
+                if (msg.isNewMsg) {
+                    // 1)插入日期
+                    // 实际场景中，在消息上方是否显示时间是由后台传递给前台的消息中附加上的，可参考 微信Web版
+                    // 此处进行手动设置，5分钟之内的消息，只显示一次消息
+                    msg.createTime = new Date(msg.createTime);
+                    if (chatEn.lastMsgShowTime == null || msg.createTime.getTime() - chatEn.lastMsgShowTime.getTime() > 1000 * 60 * 5) {
+                        msgList.push({
                             role: 'sys',
                             contentType: 'text',
-                            content: yyyyMMddStr
+                            content: ak.Utils.getDateTimeStr(msg.createTime, 'H:i')
                         });
+                        chatEn.lastMsgShowTime = msg.createTime;
                     }
-                } else {
-                    // 'sys'消息类型
-                    if (msg.showTime) {
-                        msg.content = createTimeObj.HH + ':' + createTimeObj.mm + ':' + createTimeObj.ss + ' ' + msg.content;
-                    }
-                    // 是否'新消息'
-                    if (msg.isNewMsg) {
-                        msgList.push(msg);
-                    } else {
-                        msgList.unshift(msg);
-                    }
-                }
-                // 设置发送的时间
-                msg.createTimeStr = createTimeObj.HH + ':' + createTimeObj.mm + ':' + createTimeObj.ss;
 
-                // 6.设置chat对象相关属性
+                    // 2)插入消息
+                    msgList.push(msg);
+
+                } else {
+                    // TODO：这里不进行历史消息操作
+                }
+
+                // 3.设置chat对象相关属性
                 chatEn.msgList = msgList;
                 if (msg.isNewMsg) {
                     // 新消息时 更新最后一条记录和时间
-                    chatEn.lastMsgTime = msg.createTimeStr;
+                    chatEn.lastMsgTime = msg.createTime;
                     if (msg.role != 'sys') {
                         switch (msg.contentType) {
                             case 'text':
@@ -687,29 +527,16 @@ export const imStore = new Vuex.Store({
                 }
                 // 更新列表
                 if (chatEn.chatId == context.state.selectedChatEn.chatId) {
-                    // 当前已选中的会话来了新消息，直接过滤
+                    chatEn.newMsgCount = 0;
                     context.state.selectedChatEn = Object.assign({}, chatEn);
-
-                    if (window.intVue.$route.name == 'im') {
-                        chatEn.newMsgCount = 0;
-                    } else if (msg.contentType != 'preInput') {
-                        // 非'im'模块，也要显示新消息数
-                        chatEn.newMsgCount++;
-                    }
-
-                    if (msg.isNewMsg) {
-                        context.commit('triggerHaveNewMsgDelegate');
-                    }
-                } else if (msg.contentType != 'preInput') {
+                } else {
                     chatEn.newMsgCount++;
                 }
 
-                // 7.菜单栏显示总的新消息数
-                context.dispatch('refreshMenuOfMsgCount');
-                // 8.排序
+                // 4.排序
                 context.commit('sortCurrentChatEnlist', {});
 
-                // 9.加入通知
+                // 5.加入通知
                 if (msg.isNewMsg && msg.role == 'client' && msg.contentType != 'preInput') {
                     context.dispatch('addNotificationChat', {
                         chatEn: chatEn,
@@ -717,8 +544,6 @@ export const imStore = new Vuex.Store({
                     });
                 }
 
-                // 回调
-                payload.successCallbcak && payload.successCallbcak();
             });
         },
 
@@ -767,7 +592,7 @@ export const imStore = new Vuex.Store({
         addNotificationChat: function(context, { chatEn, oprType }) {
             var state = context.state;
             // 当前的路由是否在im模块里，若不在im模块里，才显示通知
-            if (window.intVue.$route.name == 'im') {
+            if (window.polkVue.$route.name == 'im') {
                 return;
             }
 
@@ -807,21 +632,21 @@ export const imStore = new Vuex.Store({
             state.notificationChatEnlist.push(tmpChatEn);
 
             // 6.当通知数量大于5个时清除通知
-            window.imStore_notificationList = window.imStore_notificationList || [];
-            if (window.imStore_notificationList.length > 5) {
-                window.imStore_notificationList.forEach((item, index) => {
+            window.imServerStore_notificationList = window.imServerStore_notificationList || [];
+            if (window.imServerStore_notificationList.length > 5) {
+                window.imServerStore_notificationList.forEach((item, index) => {
                     item.close();
                 });
-                window.imStore_notificationList = [];
+                window.imServerStore_notificationList = [];
             }
 
             // 7.显示通知
             for (var i = 0; i < state.notificationChatEnlist.length; i++) {
                 const item = state.notificationChatEnlist[i];
                 // 1)已存在的通知列表是否包含此会话，若存在就关闭并移除
-                for (var j = 0; j < window.imStore_notificationList.length; j++) {
-                    if (window.imStore_notificationList[j].data == item.chatId) {
-                        window.imStore_notificationList[j].close();
+                for (var j = 0; j < window.imServerStore_notificationList.length; j++) {
+                    if (window.imServerStore_notificationList[j].data == item.chatId) {
+                        window.imServerStore_notificationList[j].close();
                         break;
                     }
                 }
@@ -835,11 +660,11 @@ export const imStore = new Vuex.Store({
                 });
                 notification.onclick = function(e) {
                     window.focus();
-                    window.intVue.$router.push('im');
+                    window.polkVue.$router.push('im');
                     context.commit('clearNotificationChat');
                     context.dispatch('selectChat', { chatId: item.chatId });
                     notification.close();
-                    imStore_notificationList = [];
+                    imServerStore_notificationList = [];
                 };
 
                 notification.onclose = function(e) {
@@ -851,9 +676,9 @@ export const imStore = new Vuex.Store({
                         }
                     }
                     // remove notification
-                    for (var i = 0; i < window.imStore_notificationList.length; i++) {
-                        if (window.imStore_notificationList[i].tag == notification.tag) {
-                            window.imStore_notificationList.splice(i, 1);
+                    for (var i = 0; i < window.imServerStore_notificationList.length; i++) {
+                        if (window.imServerStore_notificationList[i].tag == notification.tag) {
+                            window.imServerStore_notificationList.splice(i, 1);
                             break;
                         }
                     }
@@ -863,7 +688,7 @@ export const imStore = new Vuex.Store({
                     notification && notification.close();
                 }, 1000 * 10);
 
-                window.imStore_notificationList.push(notification);
+                window.imServerStore_notificationList.push(notification);
             }
         },
 

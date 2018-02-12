@@ -11,7 +11,8 @@
             </div>
         </header>
         <main class="imChat-main">
-            <common-chat class="" :chatEn="chatEn"></common-chat>
+            <!-- 聊天框区域 -->
+            <common-chat class="" :chatEn="storeSelectedChatEn" @sendMsg="sendMsg"></common-chat>
         </main>
     </div>
 </template>
@@ -24,34 +25,37 @@ export default {
         commonChat: commonChat
     },
     data() {
-        return {
-            chatEn: ''
-        };
+        return {};
     },
     computed: {
         storeSelectedChatEn() {
-            return this.$store.imStore.getters.selectedChatEn;
+            return this.$store.imServerStore.getters.selectedChatEn;
         }
     },
     watch: {},
     methods: {
         /**
-         * 初始化
-         * @param {Object} opts 可选对象
-         * @param {String} opts.oprType 操作类型,默认add
-         * @param {Object} opts.chatEn im会话对象
-         */
-        init: function(opts) {
-            var self = this;
-        },
-
-        /**
          * 结束
          */
         close: function() {
             // 发送关闭请求
-            this.$store.imStore.dispatch('im_close', {
-                chatId: this.$data.chatEn.chatId
+            this.$store.imServerStore.dispatch('im_close', {
+                chatId: this.storeSelectedChatEn.chatId
+            });
+        },
+
+        /**
+         * 发送消息
+         * @param {Object} msg 消息对象
+         */
+        sendMsg: function(msgObj) {
+            this.$store.imServerStore.dispatch('addChatMsg', {
+                chatId: this.storeSelectedChatEn.chatId,
+                msg: {
+                    role: 'server',
+                    contentType: msgObj.contentType,
+                    content: msgObj.content
+                }
             });
         }
     },

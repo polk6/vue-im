@@ -44,11 +44,11 @@ export default {
     },
     computed: {
         selectedChatEn() {
-            return this.$store.imStore.getters.selectedChatEn;
+            return this.$store.imServerStore.getters.selectedChatEn;
         },
         // 当前会话列表
         storeCurrentChatEnlist() {
-            return this.$store.imStore.getters.currentChatEnlist;
+            return this.$store.imServerStore.getters.currentChatEnlist;
         }
     },
     watch: {},
@@ -58,7 +58,7 @@ export default {
          * @param {Object} en call实体类
          */
         selectChat: function(en) {
-            this.$store.imStore.dispatch('selectChat', { chatId: en.chatId });
+            this.$store.imServerStore.dispatch('selectChat', { chatId: en.chatId });
             this.$emit('selectedChat', {}); // 事件上传
         },
 
@@ -68,7 +68,7 @@ export default {
         toggleFollowIcon: function(en) {
             en.isFollow = !en.isFollow;
             // 排序
-            this.$store.imStore.commit('sortCurrentChatEnlist', {});
+            this.$store.imServerStore.commit('sortCurrentChatEnlist', {});
         },
 
         /**

@@ -22,7 +22,7 @@ export default {
     },
     computed: {
         storeSelectedChatEn() {
-            return this.$store.imStore.getters.selectedChatEn;
+            return this.$store.imServerStore.getters.selectedChatEn;
         }
     },
     watch: {},
@@ -30,9 +30,7 @@ export default {
         /**
          * 选中了会话
          */
-        selectedChat: function() {
-            console.log(123);
-        }
+        selectedChat: function() {}
     },
     mounted() {}
 };

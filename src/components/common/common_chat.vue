@@ -1,75 +1,68 @@
 <!-- 聊天记录 -->
 <template>
     <div class="common_chat-wrapper">
-        <!-- 聊天记录 -->
-        <div class="common_chat-main" id="common_chat_main" ref="common_chat_main">
-            <div class="common_chat-main-content">
-                <div class="inner">
-                    <div v-for="(item ,index) in chatEn.msgList" :key="index">
-                        <!-- 系统消息 -->
-                        <div v-if="item.role=='sys'" class="item sys">
-                            <!-- 1)文本类型 -->
-                            <div v-if="item.contentType=='text'" class="text-content">
-                                <p>{{item.content}}</p>
-                            </div>
-                            <div v-else-if="item.contentType=='myd'" class="myd-content">
-                                <p class="desc">用户对您的评价</p>
-                                <p class="text">{{item.content}}</p>
-                                <p class="remark" v-show="item.mydRemark.length>0">备注：{{item.mydRemark}}</p>
-                            </div>
-                        </div>
-                        <!-- 客户、客服 -->
-                        <div v-else class="item" :class="item.role">
-                            <!-- 头像 -->
-                            <div class="headericon-wrapper">
-                                <i v-if="item.role=='client'" class="iconfont" :class="getIconFromWay(chatEn.sourceInfo_way)"></i>
-                                <div v-else-if="item.role=='server'">
-                                    <span class="kf-name">{{item.name}}</span>
-                                    <img class="kf-img" src="">
-                                </div>
-                            </div>
-                            <div class="info-wrapper" :class="item.state">
-                                <div class="item-header">
-                                    <span>{{item.createTimeStr}}</span>
-                                </div>
+        <div class="imLog-inner">
+            <!-- 聊天记录 -->
+            <div class="common_chat-main" id="common_chat_main" ref="common_chat_main">
+                <div class="common_chat-main-content">
+                    <div class="inner">
+                        <div v-for="(item ,index) in chatEn.msgList" :key="index">
+                            <!-- 系统消息 -->
+                            <div v-if="item.role=='sys'" class="item sys">
                                 <!-- 1)文本类型 -->
-                                <div v-if="item.contentType=='text'" class="item-content common_chat_emoji-wrapper-global">
-                                    <p class="text" v-html="getQQfaceEmoji(item.content)"></p>
+                                <div v-if="item.contentType=='text'" class="text-content">
+                                    <p>{{item.content}}</p>
                                 </div>
-                                <!-- 2)图片类型 -->
-                                <div v-else-if="item.contentType=='image'" class="item-content">
-                                    <img class="img" :src="item.smallImgUrl" @click="imgViewDialog_show(item)" />
+                            </div>
+                            <!-- 客户、客服 -->
+                            <div v-else class="item" :class="item.role">
+                                <!-- 头像 -->
+                                <div class="headericon-wrapper">
+                                    <i v-if="item.role=='client'" class="iconfont" :class="getIconFromWay(chatEn.sourceInfo_way)"></i>
+                                    <div v-else-if="item.role=='server'">
+                                        <img class="kf-img" src="">
+                                    </div>
                                 </div>
-                                <!-- 3)文件类型 -->
-                                <div v-else-if="item.contentType=='file'" class="item-content">
-                                    <div class="file">
-                                        <i class="file-icon iconfont" :class="getFileIcon(item.fileName)"></i>
-                                        <div class="file-info">
-                                            <p class="file-name">{{getFileName(item.fileName)}}</p>
-                                            <div class="file-opr">
-                                                <!-- 上传中 -->
-                                                <div v-show="item.state=='uploading'" class="uploading">
-                                                    <div class="progress-bar"></div>
-                                                    <a href="javascript:void(0)" @click="fileUpload_cancel(item.msgId)">取消</a>
-                                                </div>
-                                                <div v-show="item.state=='success'">
-                                                    <a class="file-download" :href="item.fileUrl" target='_blank' :download="item.fileUrl">下载</a>
-                                                </div>
-                                                <div v-show="item.state=='error'" class="error">
-                                                    <span class="error-tips">网络错误</span>
-                                                    <a href="javascript:void(0)" @click="fileUpload_reSend(item)">重试</a>
+                                <div class="info-wrapper" :class="item.state">
+                                    <!-- 1)文本类型 -->
+                                    <div v-if="item.contentType=='text'" class="item-content common_chat_emoji-wrapper-global">
+                                        <p class="text" v-html="getqqemojiEmoji(item.content)"></p>
+                                    </div>
+                                    <!-- 2)图片类型 -->
+                                    <div v-else-if="item.contentType=='image'" class="item-content">
+                                        <img class="img" :src="item.content" @click="imgViewDialog_show(item)" />
+                                    </div>
+                                    <!-- 3)文件类型 -->
+                                    <div v-else-if="item.contentType=='file'" class="item-content">
+                                        <div class="file">
+                                            <i class="file-icon iconfont" :class="getFileIcon(item.fileName)"></i>
+                                            <div class="file-info">
+                                                <p class="file-name">{{getFileName(item.fileName)}}</p>
+                                                <div class="file-opr">
+                                                    <!-- 上传中 -->
+                                                    <div v-show="item.state=='uploading'" class="uploading">
+                                                        <div class="progress-bar"></div>
+                                                        <a href="javascript:void(0)" @click="fileUpload_cancel(item.msgId)">取消</a>
+                                                    </div>
+                                                    <div v-show="item.state=='success'">
+                                                        <a class="file-download" :href="item.fileUrl" target='_blank' :download="item.fileUrl">下载</a>
+                                                    </div>
+                                                    <div v-show="item.state=='error'" class="error">
+                                                        <span class="error-tips">网络错误</span>
+                                                        <a href="javascript:void(0)" @click="fileUpload_reSend(item)">重试</a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <!-- 4)语音 -->
-                                <div v-if="item.contentType=='voice'" class="item-content">
-                                    <div class="voice" @click="playVoice(item)" :style="{ width: (190*item.content/60) + 'px' }">
-                                        <i class="voice-play" v-show="item.playing" :class="item.role+'-voice'"></i>
-                                        <i class="iconfont icon-yuyin" v-show="!item.playing"></i>
-                                        <span>{{item.content}}''</span>
-                                        <audio class="hide common_chat-radio" :id="'common_chat_radio_'+item.id" :src="item.fileURL"></audio>
+                                    <!-- 4)语音 -->
+                                    <div v-if="item.contentType=='voice'" class="item-content">
+                                        <div class="voice" @click="playVoice(item)" :style="{ width: (190*item.content/60) + 'px' }">
+                                            <i class="voice-play" v-show="item.playing" :class="item.role+'-voice'"></i>
+                                            <i class="iconfont icon-yuyin" v-show="!item.playing"></i>
+                                            <span>{{item.content}}''</span>
+                                            <audio class="hide common_chat-radio" :id="'common_chat_radio_'+item.id" :src="item.fileURL"></audio>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -77,36 +70,44 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- 底部区域 -->
-        <div class="common_chat-footer">
-            <div>
-                <!-- 表情、文件选择等操作 -->
-                <div class="opr-wrapper">
-                    <common-chat-emoji class="item" ref="qqface" @select="qqface_selectFace"></common-chat-emoji>
-                    <a class="item" href="javascript:void(0)" @click="fileUpload_click('img')">
-                        <i class="iconfont icon-IMtupian"></i>
-                    </a>
-                    <a class="item" href="javascript:void(0)" @click="fileUpload_click('file')">
-                        <i class="item iconfont icon-IMwenjian"></i>
-                    </a>
-                    <form method="post" target="hidden_iframe" enctype="multipart/form-data">
-                        <input type="file" name="fileName" id="common_chat_opr_fileUpload" style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;">
-                    </form>
+            <!-- 底部区域 -->
+            <div class="common_chat-footer">
+                <div>
+                    <!-- 表情、文件选择等操作 -->
+                    <div class="opr-wrapper">
+                        <common-chat-emoji class="item" ref="qqemoji" @select="qqemoji_selectFace"></common-chat-emoji>
+                        <a class="item" href="javascript:void(0)" @click="fileUpload_click('img')">
+                            <i class="iconfont icon-IMtupian"></i>
+                        </a>
+                        <a class="item" href="javascript:void(0)" @click="fileUpload_click('file')">
+                            <i class="item iconfont icon-IMwenjian"></i>
+                        </a>
+                        <form method="post" target="hidden_iframe" enctype="multipart/form-data">
+                            <input type="file" name="fileName" id="common_chat_opr_fileUpload" style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;">
+                        </form>
+                    </div>
+                    <!-- 聊天输入框 -->
+                    <div class="input-wrapper">
+                        <div maxlength="500" class="inputContent common_chat_emoji-wrapper-global" id="common_chat_input" contenteditable="true" @paste.stop="inputContent_paste" @keydown="inputContent_keydown" @mouseup="inputContent_mouseup" @mouseleave="inputContent_mouseup"></div>
+                    </div>
+                    <!-- 发送按钮 -->
+                    <el-button type="primary" size="small" class="send-btn" :class="chatEn.state" @click="sendText()" :disabled="chatEn.inputContent.length==0">发送</el-button>
                 </div>
-                <!-- 聊天输入框 -->
-                <div class="input-wrapper">
-                    <div maxlength="500" class="inputContent common_chat_emoji-wrapper-global" id="common_chat_input" contenteditable="true" @paste.stop="inputContent_paste" @keydown="inputContent_keydown" @mouseup="inputContent_mouseup" @mouseleave="inputContent_mouseup"></div>
+                <!-- 离线 -->
+                <div v-show="chatEn.state=='off' || chatEn.state=='end'" class="off-wrapper">
+                    <span class="content">会话已经结束</span>
                 </div>
-                <!-- 发送按钮 -->
-                <el-button type="primary" size="small" class="send-btn" :class="chatEn.state" @click="send()" :disabled="chatEn.inputContent.length==0">发送</el-button>
-            </div>
-            <!-- 离线 -->
-            <div v-show="chatEn.state=='off' || chatEn.state=='end'" class="off-wrapper">
-                <span class="content">会话已经结束</span>
             </div>
         </div>
+        <!-- 图片查看dialog -->
+        <el-dialog title="" :visible.sync="imgViewDialogVisible" class="imgView-dialog" :modal="false">
+            <div class="header">
+                <i class="iconfont icon-IM-tupianguanbi" @click="imgViewDialog_close"></i>
+            </div>
+            <img class="img" :src="imgViewDialog_imgSrc" />
+        </el-dialog>
     </div>
+
 </template>
 
 <script>
@@ -116,12 +117,18 @@ export default {
     components: {
         commonChatEmoji: common_chat_emoji
     },
-    data() {
-        return {
-            chatEn: {
+    props: {
+        chatEn: {
+            required: true,
+            type: Object,
+            default: {
                 inputContent: '',
                 msgList: []
-            },
+            }
+        }
+    },
+    data() {
+        return {
             inputContent_setTimeout: null, // 输入文字时在输入结束才修改具体内容
             selectionRange: null, // 输入框选中的区域
             shortcutMsgList: [], // 聊天区域的快捷回复列表
@@ -140,21 +147,21 @@ export default {
          */
         init: function(opts) {
             var self = this;
-            this.$data.chatEn = opts.chatEn;
+            this.chatEn = opts.chatEn;
             // 初始化状态
             document.getElementById('common_chat_input').innerHTML = '';
-            self.$refs.qqface.$data.faceHidden = true;
+            self.$refs.qqemoji.$data.faceHidden = true;
 
             // 在线状态
-            if (this.$data.chatEn.state == 'on') {
+            if (this.chatEn.state == 'on') {
                 // 1.显示在输入框的内容
                 setTimeout(function() {
                     // 未断开获取焦点
                     document.getElementById('common_chat_input').focus();
                     self.setInputContentSelectRange();
                     // 设置之前保存的输入框内容
-                    if (self.$data.chatEn.inputContent) {
-                        self.setInputDiv(self.$data.chatEn.inputContent);
+                    if (self.chatEn.inputContent) {
+                        self.setInputDiv(self.chatEn.inputContent);
                     }
                 }, 200);
             } else {
@@ -169,9 +176,9 @@ export default {
         },
 
         /**
-         * 发送
+         * 发送文本
          */
-        send: function() {
+        sendText: function() {
             var self = this;
             if (self.chatEn.inputContent.length == '') {
                 return;
@@ -179,8 +186,8 @@ export default {
             var msgContent = self.chatEn.inputContent;
             document.getElementById('common_chat_input').innerHTML = '';
             self.setInputContentByDiv();
-            // 传递
-            this.$emit('send', {
+
+            this.sendMsg({
                 contentType: 'text',
                 content: msgContent
             });
@@ -202,13 +209,13 @@ export default {
             if (tmpInputContent.length > 500) {
                 document.getElementById('common_chat_input').innerHTML = '';
                 var value = tmpInputContent.substr(0, 499).replace(/\[(.+?)\]/g, function(item, value) {
-                    return self.$refs.qqface.getImgByFaceName(value);
+                    return self.$refs.qqemoji.getImgByFaceName(value);
                 });
                 this.setInputDiv(value);
             }
 
             // 3.修改store
-            this.$data.chatEn.inputContent = tmpInputContent;
+            this.chatEn.inputContent = tmpInputContent;
         },
 
         /**
@@ -229,7 +236,7 @@ export default {
             }
 
             // 2.表情转换为img
-            value = this.getQQfaceEmoji(value);
+            value = this.getqqemojiEmoji(value);
 
             // 3.填充内容
             var sel, range;
@@ -266,14 +273,13 @@ export default {
         /**
          * 转换为QQ表情
          */
-        getQQfaceEmoji: function(value) {
-            console.log(value);
+        getqqemojiEmoji: function(value) {
             if (value == undefined) {
                 return;
             }
             var self = this;
             return value.replace(/\[(.+?)\]/g, function(item, value) {
-                return self.$refs.qqface.getImgByFaceName(value);
+                return self.$refs.qqemoji.getImgByFaceName(value);
             });
         },
 
@@ -311,14 +317,14 @@ export default {
             // 1.快捷键判断
             if (e.keyCode == 13) {
                 // 回车直接发送
-                this.send();
+                this.sendText();
                 e.returnValue = false;
                 return;
             }
 
             this.setInputContentSelectRange();
             var self = this;
-            // keyup触发时，绑定的model还没有被变更，需要进行延后访问
+            // keyup触发时，绑定的数据还没有被变更，需要进行延后访问
             clearTimeout(this.$data.inputContent_setTimeout);
             this.$data.inputContent_setTimeout = setTimeout(function() {
                 self.setInputContentByDiv();
@@ -334,17 +340,15 @@ export default {
             if (e.clipboardData && e.clipboardData.items.length > 0) {
                 // 1.上传图片
                 for (var i = 0; i < e.clipboardData.items.length; i++) {
-                    var item = e.clipboardData.items[0];
+                    var item = e.clipboardData.items[i];
                     if (item.kind == 'file' && item.type.indexOf('image') >= 0) {
                         // 粘贴板为图片类型
-                        var file = e.clipboardData.items[i].getAsFile();
+                        var file = item.getAsFile();
                         var reader = new FileReader();
                         reader.onload = function(evt) {
                             // 在消息中显示图片
                             var imgData = evt.target.result;
-
-                            self.$store.imStore.dispatch('im_send', {
-                                chatId: self.chatEn.chatId,
+                            self.sendMsg({
                                 contentType: 'image',
                                 content: imgData
                             });
@@ -458,7 +462,7 @@ export default {
 
             // 2.文件上传
             var self = this;
-            self.$store.imStore.dispatch('im_send', {
+            self.$store.imServerStore.dispatch('im_send', {
                 chatId: self.chatEn.chatId,
                 contentType: 'file',
                 fileFieldName: 'from-file',
@@ -470,8 +474,8 @@ export default {
             });
 
             // 3.增加到信息集合里
-            this.$store.imStore.dispatch('addChatMsg', {
-                chatId: this.$data.chatEn.chatId,
+            this.$store.imServerStore.dispatch('addChatMsg', {
+                chatId: this.chatEn.chatId,
                 msg: {
                     role: 'server',
                     contentType: 'file',
@@ -490,10 +494,10 @@ export default {
          * @param {String} msgId 消息Id
          */
         fileUpload_cancel: function(msgId) {
-            for (var i = 0; i < this.$data.chatEn.msgList.length; i++) {
-                var msgTmp = this.$data.chatEn.msgList[i];
+            for (var i = 0; i < this.chatEn.msgList.length; i++) {
+                var msgTmp = this.chatEn.msgList[i];
                 if (msgTmp.state == 'uploading' && msgTmp.msgId == msgId) {
-                    this.$data.chatEn.msgList.splice(i, 1);
+                    this.chatEn.msgList.splice(i, 1);
                     $('#common_chat_opr_fileUpload').val('');
                     break;
                 }
@@ -501,9 +505,9 @@ export default {
         },
 
         /**
-         * qqface选中表情
+         * qqemoji选中表情
          */
-        qqface_selectFace: function(rs) {
+        qqemoji_selectFace: function(rs) {
             var imgStr = rs.imgStr;
             this.setInputDiv(imgStr);
         },
@@ -613,6 +617,25 @@ export default {
             setTimeout(function() {
                 self.$data.imgViewDialog_imgSrc = '';
             }, 100);
+        },
+
+        /**
+         * 发送消息，e.g. 文本、图片、文件
+         * @param {Object} msg 消息对象
+         */
+        sendMsg: function(msg) {
+            // 1.传递
+            this.$emit('sendMsg', {
+                contentType: msg.contentType,
+                content: msg.content
+            });
+            // 2.滚动到底部
+            this.$nextTick(() => {
+                document.getElementById('common_chat_input').focus();
+                setTimeout(() => {
+                    this.$refs.common_chat_main.scrollTop = this.$refs.common_chat_main.scrollHeight;
+                }, 100);
+            });
         }
     },
     mounted() {}
@@ -635,344 +658,319 @@ export default {
     font-size: 12px;
     float: left;
     border: 0px;
-    .common_chat-main {
-        height: calc(~'100% - 190px');
-        overflow-y: auto;
-        overflow-x: hidden;
-        position: relative;
-        .common_chat-main-header {
-            text-align: center;
-            padding-top: 14px;
-            .el-button {
-                font-size: 12px;
-                color: #8d8d8d;
-                padding: 0px;
+    .imLog-inner {
+        width: 100%;
+        height: 100%;
+        .common_chat-main {
+            height: calc(~'100% - 190px');
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            .common_chat-main-header {
+                text-align: center;
+                padding-top: 14px;
+                .el-button {
+                    font-size: 12px;
+                    color: #8d8d8d;
+                    padding: 0px;
+                }
             }
-        }
-        .common_chat-main-content {
-            position: absolute;
-            width: 100%;
-            height: calc(~'100% - 30px');
-            & > .inner {
-                padding-bottom: 20px;
-                .item {
-                    clear: both;
-                    overflow: hidden;
-                }
-                .sys {
-                    text-align: center;
-                    color: #b0b0b0;
-                    font-size: 12px;
-                    .text-content {
-                        padding-top: 20px;
+            .common_chat-main-content {
+                position: absolute;
+                width: 100%;
+                height: calc(~'100% - 30px');
+                & > .inner {
+                    padding-bottom: 20px;
+                    .item {
+                        clear: both;
+                        overflow: hidden;
                     }
-                    .myd-content {
-                        .desc {
-                            margin-top: 18px;
-                        }
-                        .text {
-                            color: #3e3e3e;
-                            margin-top: 12px;
-                        }
-                        .remark {
-                            margin-top: 10px;
-                        }
-                    }
-                }
-                .client,
-                .server {
-                    font-size: 12px;
-                    margin-top: 18px;
-                    .headericon-wrapper {
-                        float: left;
-                    }
-                    .info-wrapper {
-                        text-align: left;
+                    .sys {
+                        text-align: center;
+                        color: #b0b0b0;
                         font-size: 12px;
-                        position: relative;
-                        .item-header {
-                            position: relative;
-                            color: #b0b0b0;
+                        .text-content {
+                            padding-top: 20px;
                         }
-                        .item-content {
-                            max-width: 330px;
-                            color: #3e3e3e;
-                            font-size: 12px;
-                            position: relative;
-                            margin-top: 10px;
+                        .myd-content {
+                            .desc {
+                                margin-top: 18px;
+                            }
                             .text {
-                                white-space: normal;
-                                word-wrap: break-word;
-                                word-break: break-all;
-                                padding: 13px 12px;
+                                color: #3e3e3e;
+                                margin-top: 12px;
                             }
-                            .qqface {
-                                width: 24px;
-                                height: 24px;
-                            }
-                            .img {
-                                white-space: normal;
-                                word-wrap: break-word;
-                                word-break: break-all;
-                                padding: 5px;
-                                max-width: 320px;
-                                cursor: pointer;
-                            }
-                            .file {
-                                padding: 10px 8px;
-                                overflow: hidden;
-                                margin: 3px;
-                                background: #fff;
-                                border-radius: 5px;
-                                width: 220px;
-                                .el-button {
-                                    padding: 0px;
-                                    font-size: 12px;
-                                }
-                                .file-info {
-                                    padding: 0px 8px;
-                                    float: left;
-                                    .file-name {
-                                        width: 160px;
-                                        display: inline-block;
-                                        white-space: nowrap;
-                                        text-overflow: ellipsis;
-                                        overflow: hidden;
-                                        line-height: 1.3;
-                                    }
-                                    .file-opr {
-                                        margin-top: 10px;
-                                        .uploading {
-                                            .progress-bar {
-                                                width: 120px;
-                                                display: inline-block;
-                                                -webkit-animation: progress-bar-stripes 2s linear infinite;
-                                                animation: progress-bar-stripes 2s linear infinite;
-                                                background-image: linear-gradient(
-                                                    45deg,
-                                                    rgba(255, 255, 255, 0.15) 25%,
-                                                    transparent 25%,
-                                                    transparent 50%,
-                                                    rgba(255, 255, 255, 0.15) 50%,
-                                                    rgba(255, 255, 255, 0.15) 75%,
-                                                    transparent 75%,
-                                                    transparent
-                                                );
-                                                background-size: 20px 20px;
-                                                background-color: #20a0ff;
-                                                height: 7px;
-                                                border-radius: 10px;
-                                                box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-                                            }
-                                        }
-                                        .error {
-                                            .error-tips {
-                                                display: inline-block;
-                                                width: 70px;
-                                                color: #8d8d8d;
-                                            }
-                                        }
-                                    }
-                                }
-                                .file-icon {
-                                    font-size: 40px;
-                                    float: left;
-                                }
-                                .file-download {
-                                    color: #00a8d7;
-                                    cursor: pointer;
-                                }
-                            }
-                            .preInput {
-                                position: relative;
-                                color: #8d8d8d;
-                                img {
-                                    height: 15px;
-                                    position: relative;
-                                    top: 3px;
-                                }
+                            .remark {
+                                margin-top: 10px;
                             }
                         }
                     }
-                }
-                .item.client {
-                    margin-left: 5px;
-                    .headericon-wrapper {
-                        padding: 15px 18px 15px 13px;
-                        .iconfont {
-                            border-width: 0px;
-                            border-radius: 50%;
-                            padding: 7px;
-                            color: white;
-                            font-size: 16px;
-                        }
-                    }
-                    .info-wrapper {
-                        .item-content {
-                            background-color: #f9fbfc;
-                            border: 1px solid #e6e6e6;
-                            border-radius: 5px;
+                    .client,
+                    .server {
+                        font-size: 12px;
+                        margin-top: 18px;
+                        .headericon-wrapper {
                             float: left;
                         }
+                        .info-wrapper {
+                            text-align: left;
+                            font-size: 12px;
+                            position: relative;
+                            .item-content {
+                                max-width: 330px;
+                                color: #3e3e3e;
+                                font-size: 12px;
+                                position: relative;
+                                margin-top: 10px;
+                                border-radius: 6px;
+                                .text {
+                                    white-space: normal;
+                                    word-wrap: break-word;
+                                    word-break: break-all;
+                                    padding: 13px 12px;
+                                }
+                                .qqemoji {
+                                    width: 24px;
+                                    height: 24px;
+                                }
+                                .img {
+                                    max-width: 320px;
+                                    max-height: 240px;
+                                    white-space: normal;
+                                    word-wrap: break-word;
+                                    word-break: break-all;
+                                    padding: 5px;
+                                    cursor: pointer;
+                                }
+                                .file {
+                                    padding: 10px 8px;
+                                    overflow: hidden;
+                                    margin: 3px;
+                                    background: #fff;
+                                    border-radius: 5px;
+                                    width: 220px;
+                                    .el-button {
+                                        padding: 0px;
+                                        font-size: 12px;
+                                    }
+                                    .file-info {
+                                        padding: 0px 8px;
+                                        float: left;
+                                        .file-name {
+                                            width: 160px;
+                                            display: inline-block;
+                                            white-space: nowrap;
+                                            text-overflow: ellipsis;
+                                            overflow: hidden;
+                                            line-height: 1.3;
+                                        }
+                                        .file-opr {
+                                            margin-top: 10px;
+                                            .uploading {
+                                                .progress-bar {
+                                                    width: 120px;
+                                                    display: inline-block;
+                                                    -webkit-animation: progress-bar-stripes 2s linear infinite;
+                                                    animation: progress-bar-stripes 2s linear infinite;
+                                                    background-image: linear-gradient(
+                                                        45deg,
+                                                        rgba(255, 255, 255, 0.15) 25%,
+                                                        transparent 25%,
+                                                        transparent 50%,
+                                                        rgba(255, 255, 255, 0.15) 50%,
+                                                        rgba(255, 255, 255, 0.15) 75%,
+                                                        transparent 75%,
+                                                        transparent
+                                                    );
+                                                    background-size: 20px 20px;
+                                                    background-color: #20a0ff;
+                                                    height: 7px;
+                                                    border-radius: 10px;
+                                                    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+                                                }
+                                            }
+                                            .error {
+                                                .error-tips {
+                                                    display: inline-block;
+                                                    width: 70px;
+                                                    color: #8d8d8d;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .file-icon {
+                                        font-size: 40px;
+                                        float: left;
+                                    }
+                                    .file-download {
+                                        color: #00a8d7;
+                                        cursor: pointer;
+                                    }
+                                }
+                                .preInput {
+                                    position: relative;
+                                    color: #8d8d8d;
+                                    img {
+                                        height: 15px;
+                                        position: relative;
+                                        top: 3px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .item.client {
+                        margin-left: 5px;
+                        .headericon-wrapper {
+                            padding: 15px 18px 15px 13px;
+                            .iconfont {
+                                border-width: 0px;
+                                border-radius: 50%;
+                                padding: 7px;
+                                color: white;
+                                font-size: 16px;
+                            }
+                        }
+                        .info-wrapper {
+                            .item-content {
+                                background-color: #f9fbfc;
+                                border: 1px solid #e6e6e6;
+                                float: left;
+                            }
+                        }
+                    }
+                    .item.server {
+                        .headericon-wrapper {
+                            float: right;
+                            padding: 0px 18px 0px 13px;
+                            .kf-name {
+                                width: 40px;
+                                display: block;
+                                white-space: nowrap;
+                                text-overflow: ellipsis;
+                                overflow: hidden;
+                                text-align: center;
+                                color: #b0b0b0;
+                                font-size: 12px;
+                            }
+                            .kf-img {
+                                width: 40px;
+                                margin-top: 10px;
+                            }
+                        }
+                        .info-wrapper {
+                            float: right;
+                            .item-content {
+                                background-color: #0095ff;
+                                border: 1px solid #0589b7;
+                                color: #eaf4fb;
+                            }
+                        }
                     }
                 }
-                .item.server {
-                    .headericon-wrapper {
-                        float: right;
-                        padding: 0px 18px 0px 13px;
-                        .kf-name {
-                            width: 40px;
-                            display: block;
+            }
+        }
+        .common_chat-footer {
+            position: relative;
+            height: 190px;
+            width: 100%;
+            border-top: 1px solid #e6e6e6;
+            .opr-wrapper {
+                text-align: left;
+                height: 20px;
+                padding: 10px 0px 10px 16px;
+                & > .item {
+                    margin-right: 12px;
+                    float: left;
+                    font-weight: normal;
+                    text-decoration: blink;
+                    & > .iconfont {
+                        color: #aaa;
+                        font-size: 20px;
+                    }
+                }
+            }
+            .input-wrapper {
+                padding: 2px 15px 0px;
+                position: relative;
+                .inputContent {
+                    width: 99%;
+                    padding: 2px;
+                    height: 85px;
+                    resize: none;
+                    overflow: auto;
+                    line-height: 1.5;
+                    outline: 0px solid transparent;
+                }
+                .shortcutPopover-wrapper {
+                    position: absolute;
+                    top: 30px;
+                    left: 10px;
+                    width: 440px;
+                    max-height: 80px;
+                    overflow-y: auto;
+                    border: 1px solid #9b9aab;
+                    border-radius: 3px;
+                    font-size: 12px;
+                    background-color: #fff;
+                    padding: 4px;
+                    cursor: pointer;
+                    p {
+                        padding: 4px;
+                        &.selected {
+                            background-color: #ded1cc;
+                        }
+                        .key {
+                            width: 50px;
+                            display: inline-block;
                             white-space: nowrap;
                             text-overflow: ellipsis;
                             overflow: hidden;
-                            text-align: center;
-                            color: #b0b0b0;
-                            font-size: 12px;
                         }
-                        .kf-img {
-                            width: 40px;
-                            margin-top: 10px;
+                        .content {
+                            margin-left: 10px;
+                            width: 350px;
+                            display: inline-block;
+                            white-space: nowrap;
+                            text-overflow: ellipsis;
+                            overflow: hidden;
                         }
-                    }
-                    .info-wrapper {
-                        float: right;
-                        &::before {
-                            font-family: 'iconfont';
-                            font-size: 16px;
-                            content: '\e61d';
-                            color: #ff3939;
-                            position: absolute;
-                            left: -35px;
-                            top: 30%;
-                            display: none;
-                        }
-                        &.error::before {
-                            display: inherit;
-                        }
-                        .item-header {
-                            text-align: right;
-                        }
-                        .item-content {
-                            background-color: #d2f4fd;
-                            border: 1px solid #c3e9f6;
-                            border-radius: 5px;
-                            .voice {
-                                text-align: left;
-                                .voice-play,
-                                .icon-yuyin {
-                                    float: right;
-                                }
-                                .icon-yuyin {
-                                    transform: rotate(180deg);
-                                }
-                            }
+                        .highlight {
+                            color: #00a8d7;
                         }
                     }
                 }
-            }
-        }
-    }
-    .common_chat-footer {
-        position: relative;
-        height: 190px;
-        width: 100%;
-        border-top: 1px solid #e6e6e6;
-        .opr-wrapper {
-            text-align: left;
-            height: 20px;
-            padding: 10px 0px 18px 16px;
-            & > .item {
-                margin-right: 12px;
-                float: left;
-                font-weight: normal;
-                text-decoration: blink;
-                & > .iconfont {
-                    color: #aaa;
-                    font-size: 20px;
+                .tips {
+                    position: absolute;
+                    top: 7px;
+                    left: 20px;
+                    width: auto;
+                    color: #8d8d8d;
                 }
             }
-        }
-        .input-wrapper {
-            padding: 2px 15px 0px;
-            position: relative;
-            .inputContent {
-                width: 99%;
-                padding: 2px;
-                height: 85px;
-                resize: none;
-                overflow: auto;
-                line-height: 1.5;
-                outline: 0px solid transparent;
-            }
-            .shortcutPopover-wrapper {
-                position: absolute;
-                top: 30px;
-                left: 10px;
-                width: 440px;
-                max-height: 80px;
-                overflow-y: auto;
-                border: 1px solid #9b9aab;
-                border-radius: 3px;
-                font-size: 12px;
-                background-color: #fff;
-                padding: 4px;
-                cursor: pointer;
-                p {
-                    padding: 4px;
-                    &.selected {
-                        background-color: #ded1cc;
-                    }
-                    .key {
-                        width: 50px;
-                        display: inline-block;
-                        white-space: nowrap;
-                        text-overflow: ellipsis;
-                        overflow: hidden;
-                    }
-                    .content {
-                        margin-left: 10px;
-                        width: 350px;
-                        display: inline-block;
-                        white-space: nowrap;
-                        text-overflow: ellipsis;
-                        overflow: hidden;
-                    }
-                    .highlight {
-                        color: #00a8d7;
-                    }
+            .send-btn {
+                float: right;
+                margin-right: 16px;
+                &.off,
+                &.end {
+                    background-color: #ccc;
+                    border-color: #ccc;
                 }
             }
-            .tips {
+            .off-wrapper {
                 position: absolute;
-                top: 7px;
-                left: 20px;
-                width: auto;
-                color: #8d8d8d;
-            }
-        }
-        .send-btn {
-            float: right;
-            margin-right: 16px;
-            &.off,
-            &.end {
-                background-color: #ccc;
-                border-color: #ccc;
-            }
-        }
-        .off-wrapper {
-            position: absolute;
-            top: 0px;
-            left: 0px;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
-            .content {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
+                top: 0px;
+                left: 0px;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(255, 255, 255, 0.6);
+                font-size: 14px;
+                .content {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                }
             }
         }
     }
