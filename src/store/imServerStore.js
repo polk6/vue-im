@@ -9,6 +9,10 @@ import ak from '@/common/ak.js';
 Vue.use(Vuex);
 export const imServerStore = new Vuex.Store({
     state: {
+        serverChatInfo: {
+            serverChatId: Number.parseInt(Date.now() + Math.random()),
+            serverChatName: '小P',
+        },
         selectedChatEn: null, // 选取的会话对象
         currentChatEnlist: [{
             userName: '张三',
@@ -717,31 +721,10 @@ export const imServerStore = new Vuex.Store({
         },
 
         /**
-         * 获取选中的快捷语句
-         */
-        shortcutReplyContent: function(state) {
-            return state.shortcutReplyContent;
-        },
-
-        /**
-         * 获取是否显示ChatTable
-         */
-        imHistoryTableVisible: function(state) {
-            return state.imHistoryTableVisible;
-        },
-
-        /**
          * 当前会话集合
          */
         currentChatEnlist: function(state) {
             return state.currentChatEnlist;
-        },
-
-        /**
-         * 历史会话集合
-         */
-        historyChatEnlist: function(state) {
-            return state.historyChatEnlist;
         },
 
         /**
@@ -752,17 +735,10 @@ export const imServerStore = new Vuex.Store({
         },
 
         /**
-         * 当前已选中的会话含有新的消息
+         * 客服chat信息
          */
-        haveNewMsgDelegate: function(state) {
-            return state.haveNewMsgDelegate;
-        },
-
-        /**
-         * 通知chat实体集合
-         */
-        notificationChatEnlist: function(state) {
-            return state.notificationChatEnlist;
+        serverChatInfo: function(state) {
+            return state.serverChatInfo
         }
     }
 });

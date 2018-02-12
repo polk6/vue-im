@@ -83,7 +83,7 @@
                             <i class="item iconfont icon-IMwenjian"></i>
                         </a>
                         <form method="post" target="hidden_iframe" enctype="multipart/form-data">
-                            <input type="file" name="fileName" id="common_chat_opr_fileUpload" style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;">
+                            <input type="file" name="uploadFile" id="common_chat_opr_fileUpload" style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;">
                         </form>
                     </div>
                     <!-- 聊天输入框 -->

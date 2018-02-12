@@ -23,6 +23,9 @@ export default {
     computed: {
         storeSelectedChatEn() {
             return this.$store.imServerStore.getters.selectedChatEn;
+        },
+        stroeServerChatInfo() {
+            return this.$store.imServerStore.getters.serverChatInfo;
         }
     },
     watch: {},
@@ -30,9 +33,27 @@ export default {
         /**
          * 选中了会话
          */
-        selectedChat: function() {}
+        selectedChat: function() {},
+
+        regSocket: function() {
+            var serverChatInfo = this.$store.imServerStore.getters.serverChatInfo;
+            var socket = this.$socket('http://localhost:3000');
+            // 注册
+            socket.emit('serverOn', {
+                serverChatId: serverChatInfo.serverChatId,
+                serverChatName: serverChatInfo.serverChatName
+            });
+
+            // 接收client消息
+            socket.on('receiveClientMsg', function(data) {
+                console.log(data);
+            });
+        }
     },
-    mounted() {}
+    mounted() {
+        console.log(1);
+        this.regSocket();
+    }
 };
 </script>
 
