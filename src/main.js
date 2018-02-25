@@ -10,10 +10,6 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 Vue.use(ElementUI);
 
-// socket
-import socket from 'socket.io-client';
-Vue.prototype.$socket = socket;
-
 // config
 Vue.config.productionTip = false
 

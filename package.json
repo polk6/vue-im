@@ -29,6 +29,8 @@
     "copy-webpack-plugin": "^4.0.1",
     "css-loader": "^0.28.9",
     "element-ui": "^2.1.0",
+    "engine.io": "^3.1.4",
+    "engine.io-client": "^3.1.4",
     "express": "^4.16.2",
     "express-fileupload": "^0.4.0",
     "extract-text-webpack-plugin": "^3.0.0",

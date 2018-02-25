@@ -37,16 +37,20 @@ export default {
 
         regSocket: function() {
             var serverChatInfo = this.$store.imServerStore.getters.serverChatInfo;
-            var socket = this.$socket('http://localhost:3000');
-            // 注册
-            socket.emit('serverOn', {
-                serverChatId: serverChatInfo.serverChatId,
-                serverChatName: serverChatInfo.serverChatName
-            });
+            var socket = require('engine.io-client')('http://localhost:3001');
+            socket.on('open', function() {
+                console.log('connected');
+                socket.send('nihao');
+                // 注册
+                socket.emit('serverOn', {
+                    serverChatId: serverChatInfo.serverChatId,
+                    serverChatName: serverChatInfo.serverChatName
+                });
 
-            // 接收client消息
-            socket.on('receiveClientMsg', function(data) {
-                console.log(data);
+                // 接收client消息
+                socket.on('receiveClientMsg', function(data) {
+                    console.log(data);
+                });
             });
         }
     },

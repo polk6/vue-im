@@ -142,9 +142,9 @@ app.get('*', function(req, res, next) {
 app.use(function(req, res, next) {
   const origin = req.get('origin');
   res.header('Access-Control-Allow-Origin', origin);
+  res.header('Access-Control-Allow-Origin', true);
   //res.header('Access-Control-Allow-Credentials', false);
   res.header('Access-Control-Allow-Headers', 'X-Requested-With');
-  //res.header('Access-Control-Allow-Headers', 'Content-Type');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
   res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') {
@@ -157,17 +157,15 @@ app.listen(3000);
 
 // socket
 var http = require('http');
-var server = http.createServer();
-var engine = require('engine.io');
-var eio = engine.attach(server);
+var server = http.createServer(app);
+var io = require('socket.io')(server);
+io.set('transports', ['websocket', 'xhr-polling', 'jsonp-polling', 'htmlfile', 'flashsocket']);
 var serverSocketDic = {}; // 客服Socket字典
 var clientSocketDic = {}; // 客户端Socket字典
 // 开启scoket
-eio.on('connection', function(socket) {
+io.on('connection', function(socket) {
   console.log('new socket connected');
-  socket.on('message', function(data){
-      console.log(data);
-   });
+
   // 服务端新上线
   socket.on('serverOn', function(msg) {
     var rs = JSON.parse(msg);
@@ -203,4 +201,3 @@ eio.on('connection', function(socket) {
     }
   });
 });
-server.listen(3001);
