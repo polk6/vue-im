@@ -13,12 +13,12 @@
                         <i class="iconfont icon-zhidingwujiaoxing" :class="{ active: tmpEn.isFollow}" @click.stop="toggleFollowIcon(tmpEn)"></i>
                     </div>
                     <div class="platicon-wrapper">
-                        <div class="header-img" :class="getBgClass(tmpEn.userName)">{{tmpEn.userName.substr(0,1)}}</div>
+                        <div class="header-img" :class="getBgClass(tmpEn.chatName)">{{tmpEn.chatName.substr(0,1)}}</div>
                     </div>
                     <div class="info-wrapper">
                         <p class="first-p">
-                            <span class="name">{{tmpEn.userName}}</span>
-                            <span class="lastMsgTime">{{getDateTimeStr(tmpEn.lastMsgTime,'H:i:s')}}</span>
+                            <span class="name">{{tmpEn.chatName}}</span>
+                            <span class="lastMsgTime">{{getLastMsgTimeStr(tmpEn.lastMsgTime)}}</span>
                         </p>
                         <p class="second-p">
                             <span class="lastMsgContent" v-html="tmpEn.lastMsgContent"></span>
@@ -73,85 +73,22 @@ export default {
 
         /**
          * 获取背景class
-         * @param {string} userName 姓名
+         * @param {string} chatName 姓名
          */
-        getBgClass: function(userName) {
-            var rs = userName.charCodeAt(0) % 5;
+        getBgClass: function(chatName) {
+            var rs = chatName.charCodeAt(0) % 5;
             return 'bg' + rs;
         },
 
         /**
-         * 对传入的时间值进行格式化。后台传入前台的时间有两种个是：Sql时间和.Net时间
+         * 返回chat对象的最后一次消息时间
          * @param {String|Date} sValue 传入的时间字符串
-         * @param {dateFormat | bool} dateFormat  日期格式，日期格式：eg：'Y-m-d H:i:s'
-         * @return {String} 2014-03-01 这种格式
-         * @example
-         * 1) Sql时间格式：2015-02-24T00:00:00
-         * 2) .Net时间格式：/Date(1410744626000)/
          */
-        getDateTimeStr: function(sValue, dateFormat) {
-            if (dateFormat == undefined) {
-                dateFormat = 'Y-m-d'; // 默认显示年月日
+        getLastMsgTimeStr: function(sValue) {
+            if (sValue == null) {
+                return '';
             }
-
-            var dt;
-            // 1.先解析传入的时间对象，
-            if (sValue) {
-                if (toString.call(sValue) !== '[object Date]') {
-                    // 不为Date格式，就转换为DateTime类型
-                    sValue = sValue + '';
-                    if (sValue.indexOf('T') > 0) {
-                        // 1)格式：2015-02-24T00:00:00
-                        var timestr = sValue.replace('T', ' ').replace(/-/g, '/'); //=> 2015/02/24 00:00:00
-                        dt = new Date(timestr);
-                    } else if (sValue.indexOf('Date') >= 0) {
-                        // 2).Net格式：/Date(1410744626000)/
-                        //Convert date type that .NET can bind to DateTime
-                        //var date = new Date(parseInt(sValue.substr(6)));
-                        var timestr = sValue.toString().replace(/\/Date\((\d+)\)\//gi, '$1'); //
-                        dt = new Date(Math.abs(timestr));
-                    } else {
-                        dt = new Date(sValue);
-                    }
-                } else {
-                    dt = sValue;
-                }
-            }
-
-            // 2.转换
-            // 1)转换成对象 'Y-m-d H:i:s'
-            var obj = {}; //返回的对象，包含了 year(年)、month(月)、day(日)
-            obj.Y = dt.getFullYear(); //年
-            obj.m = dt.getMonth() + 1; //月
-            obj.d = dt.getDate(); //日期
-            obj.H = dt.getHours();
-            obj.i = dt.getMinutes();
-            obj.s = dt.getSeconds();
-            //2.2单位的月、日都转换成双位
-            if (obj.m < 10) {
-                obj.m = '0' + obj.m;
-            }
-            if (obj.d < 10) {
-                obj.d = '0' + obj.d;
-            }
-            if (obj.H < 10) {
-                obj.H = '0' + obj.H;
-            }
-            if (obj.i < 10) {
-                obj.i = '0' + obj.i;
-            }
-            if (obj.s < 10) {
-                obj.s = '0' + obj.s;
-            }
-            // 3.解析
-            var rs = dateFormat
-                .replace('Y', obj.Y)
-                .replace('m', obj.m)
-                .replace('d', obj.d)
-                .replace('H', obj.H)
-                .replace('i', obj.i)
-                .replace('s', obj.s);
-
+            var rs = this.$ak.Utils.getDateTimeStr(sValue, 'H:i:s');
             return rs;
         }
     }
@@ -261,6 +198,7 @@ export default {
                     .second-p {
                         clear: both;
                         padding-top: 5px;
+                        line-height: 1.2;
                         .lastMsgContent {
                             width: 150px;
                             color: #8d8d8d;

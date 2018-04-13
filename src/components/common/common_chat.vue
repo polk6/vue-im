@@ -18,7 +18,7 @@
                             <div v-else class="item" :class="item.role">
                                 <!-- 头像 -->
                                 <div class="headericon-wrapper">
-                                    <i v-if="item.role=='client'" class="iconfont" :class="getIconFromWay(chatEn.sourceInfo_way)"></i>
+                                    <i v-if="item.role=='client'" class="iconfont"></i>
                                     <div v-else-if="item.role=='server'">
                                         <img class="kf-img" src="">
                                     </div>
@@ -30,38 +30,20 @@
                                     </div>
                                     <!-- 2)图片类型 -->
                                     <div v-else-if="item.contentType=='image'" class="item-content">
-                                        <img class="img" :src="item.content" @click="imgViewDialog_show(item)" />
+                                        <img class="img" :src="item.fileUrl" @click="imgViewDialog_show(item)" />
                                     </div>
                                     <!-- 3)文件类型 -->
                                     <div v-else-if="item.contentType=='file'" class="item-content">
                                         <div class="file">
-                                            <i class="file-icon iconfont" :class="getFileIcon(item.fileName)"></i>
+                                            <i class="file-icon iconfont icon-file"></i>
                                             <div class="file-info">
                                                 <p class="file-name">{{getFileName(item.fileName)}}</p>
                                                 <div class="file-opr">
-                                                    <!-- 上传中 -->
-                                                    <div v-show="item.state=='uploading'" class="uploading">
-                                                        <div class="progress-bar"></div>
-                                                        <a href="javascript:void(0)" @click="fileUpload_cancel(item.msgId)">取消</a>
-                                                    </div>
                                                     <div v-show="item.state=='success'">
                                                         <a class="file-download" :href="item.fileUrl" target='_blank' :download="item.fileUrl">下载</a>
                                                     </div>
-                                                    <div v-show="item.state=='error'" class="error">
-                                                        <span class="error-tips">网络错误</span>
-                                                        <a href="javascript:void(0)" @click="fileUpload_reSend(item)">重试</a>
-                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <!-- 4)语音 -->
-                                    <div v-if="item.contentType=='voice'" class="item-content">
-                                        <div class="voice" @click="playVoice(item)" :style="{ width: (190*item.content/60) + 'px' }">
-                                            <i class="voice-play" v-show="item.playing" :class="item.role+'-voice'"></i>
-                                            <i class="iconfont icon-yuyin" v-show="!item.playing"></i>
-                                            <span>{{item.content}}''</span>
-                                            <audio class="hide common_chat-radio" :id="'common_chat_radio_'+item.id" :src="item.fileURL"></audio>
                                         </div>
                                     </div>
                                 </div>
@@ -76,13 +58,10 @@
                     <!-- 表情、文件选择等操作 -->
                     <div class="opr-wrapper">
                         <common-chat-emoji class="item" ref="qqemoji" @select="qqemoji_selectFace"></common-chat-emoji>
-                        <a class="item" href="javascript:void(0)" @click="fileUpload_click('img')">
-                            <i class="iconfont icon-IMtupian"></i>
-                        </a>
                         <a class="item" href="javascript:void(0)" @click="fileUpload_click('file')">
                             <i class="item iconfont icon-IMwenjian"></i>
                         </a>
-                        <form method="post" target="hidden_iframe" enctype="multipart/form-data">
+                        <form method="post" enctype="multipart/form-data">
                             <input type="file" name="uploadFile" id="common_chat_opr_fileUpload" style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;">
                         </form>
                     </div>
@@ -104,7 +83,9 @@
             <div class="header">
                 <i class="iconfont icon-IM-tupianguanbi" @click="imgViewDialog_close"></i>
             </div>
-            <img class="img" :src="imgViewDialog_imgSrc" />
+            <div class="main">
+                <img class="img" :src="imgViewDialog_imgSrc" />
+            </div>
         </el-dialog>
     </div>
 
@@ -344,16 +325,23 @@ export default {
                     if (item.kind == 'file' && item.type.indexOf('image') >= 0) {
                         // 粘贴板为图片类型
                         var file = item.getAsFile();
-                        var reader = new FileReader();
-                        reader.onload = function(evt) {
-                            // 在消息中显示图片
-                            var imgData = evt.target.result;
-                            self.sendMsg({
-                                contentType: 'image',
-                                content: imgData
-                            });
-                        };
-                        reader.readAsDataURL(file);
+                        let formData = new FormData();
+                        formData.append('uploadFile', file);
+                        this.$http.uploadFile({
+                            url: '/upload',
+                            params: formData,
+                            successCallback: rs => {
+                                console.log(file);
+                                console.log(rs);
+                                document.getElementById('common_chat_opr_fileUpload').value = '';
+                                this.sendMsg({
+                                    contentType: 'image',
+                                    fileName: rs.fileName,
+                                    fileUrl: rs.fileUrl,
+                                    state: 'success'
+                                });
+                            }
+                        });
                         isImage = true;
                     }
                 }
@@ -380,14 +368,8 @@ export default {
 
         /**
          * 文件上传_点击
-         * @param {String} fileType 上传的文件类型
          */
         fileUpload_click: function(fileType) {
-            if (fileType == 'img') {
-                document.getElementById('common_chat_opr_fileUpload').accept = '.bmp,.gif,.jpg,.pic,.png,.tif,.jpeg';
-            } else {
-                document.getElementById('common_chat_opr_fileUpload').accept = '';
-            }
             document.getElementById('common_chat_opr_fileUpload').onchange = this.fileUpload_change;
             document.getElementById('common_chat_opr_fileUpload').click();
         },
@@ -396,112 +378,34 @@ export default {
          * 文件上传_选中文件
          */
         fileUpload_change: function(e) {
-            var fileNameIndex =
-                $('#common_chat_opr_fileUpload')
-                    .val()
-                    .lastIndexOf('\\') + 1;
-            var fileName = $('#common_chat_opr_fileUpload')
-                .val()
-                .substr(fileNameIndex);
+            var fileNameIndex = document.getElementById('common_chat_opr_fileUpload').value.lastIndexOf('\\') + 1;
+            var fileName = document.getElementById('common_chat_opr_fileUpload').value.substr(fileNameIndex);
             var extend = fileName.substring(fileName.lastIndexOf('.') + 1);
             // 1.判断有效
-            // 1)格式
-            if (
-                [
-                    'txt',
-                    'doc',
-                    'docx',
-                    'hlp',
-                    'wps',
-                    'rtf',
-                    'html',
-                    'pdf',
-                    'xls',
-                    'xlsx',
-                    'ppt',
-                    'pptx',
-                    'rar',
-                    'zip',
-                    'arj',
-                    'gz',
-                    'z',
-                    '7z',
-                    'wav',
-                    'aif',
-                    'au',
-                    'mp3',
-                    'ram',
-                    'wma',
-                    'mmf',
-                    'amr',
-                    'aac',
-                    'flac',
-                    'avi',
-                    'mpg',
-                    'mov',
-                    'swf',
-                    'mp4',
-                    'bmp',
-                    'gif',
-                    'jpg',
-                    'pic',
-                    'png',
-                    'tif',
-                    'jpeg'
-                ].indexOf(extend) < 0
-            ) {
-                $('#common_chat_opr_fileUpload').val('');
-                this.$ak.Msg.toast('格式错误', 'error');
-                return;
-            } else if ($('#common_chat_opr_fileUpload')[0].files[0].size >= 1000 * 1000 * 10) {
-                // 2)大小
+            // 1)大小
+            if (document.getElementById('common_chat_opr_fileUpload').files[0].size >= 1000 * 1000 * 10) {
                 this.$ak.Msg.toast('文件大小不能超过10M', 'error');
-                $('#common_chat_opr_fileUpload').val('');
+                document.getElementById('common_chat_opr_fileUpload').value = '';
                 return false;
             }
 
             // 2.文件上传
-            var self = this;
-            self.$store.imServerStore.dispatch('im_send', {
-                chatId: self.chatEn.chatId,
-                contentType: 'file',
-                fileFieldName: 'from-file',
-                fileName: fileName,
-                fileData: $('#common_chat_opr_fileUpload')[0].files[0],
-                successCallbcak: function(rs) {
-                    $('#common_chat_opr_fileUpload').val('');
+            let formData = new FormData();
+            formData.append('uploadFile', document.getElementById('common_chat_opr_fileUpload').files[0]);
+            this.$http.uploadFile({
+                url: '/upload',
+                params: formData,
+                successCallback: rs => {
+                    console.log(rs);
+                    document.getElementById('common_chat_opr_fileUpload').value = '';
+                    this.sendMsg({
+                        contentType: ['png', 'jpg', 'jpeg', 'gif', 'bmp'].indexOf(extend) >= 0 ? 'image' : 'file',
+                        fileName: fileName,
+                        fileUrl: rs.fileUrl,
+                        state: 'success'
+                    });
                 }
             });
-
-            // 3.增加到信息集合里
-            this.$store.imServerStore.dispatch('addChatMsg', {
-                chatId: this.chatEn.chatId,
-                msg: {
-                    role: 'server',
-                    contentType: 'file',
-                    fileName: fileName,
-                    state: 'uploading'
-                }
-            });
-
-            this.$nextTick(function() {
-                self.$refs.common_chat_main.scrollTop = self.$refs.common_chat_main.scrollHeight;
-            });
-        },
-
-        /**
-         * 取消上传
-         * @param {String} msgId 消息Id
-         */
-        fileUpload_cancel: function(msgId) {
-            for (var i = 0; i < this.chatEn.msgList.length; i++) {
-                var msgTmp = this.chatEn.msgList[i];
-                if (msgTmp.state == 'uploading' && msgTmp.msgId == msgId) {
-                    this.chatEn.msgList.splice(i, 1);
-                    $('#common_chat_opr_fileUpload').val('');
-                    break;
-                }
-            }
         },
 
         /**
@@ -510,78 +414,6 @@ export default {
         qqemoji_selectFace: function(rs) {
             var imgStr = rs.imgStr;
             this.setInputDiv(imgStr);
-        },
-
-        /**
-         * 获取文件的icon
-         * @param {String} fileName 文件名称
-         */
-        getFileIcon: function(fileName) {
-            if (!fileName) {
-                return;
-            }
-            var extend = fileName.substring(fileName.lastIndexOf('.') + 1);
-            var className = '';
-            switch (extend) {
-                case 'bmp':
-                case 'gif':
-                case 'jpg':
-                case 'pic':
-                case 'png':
-                case 'tif':
-                case 'jpeg':
-                    className = 'icon-fumeititupian';
-                    break;
-                case 'doc':
-                case 'docx':
-                    className = 'icon-fumeitiword';
-                    break;
-                case 'xls':
-                case 'xlsx':
-                    className = 'icon-fumeitiexcel';
-                    break;
-                case 'pdf':
-                    className = 'icon-fumeitipdf';
-                    break;
-                case 'ppt':
-                case 'pptx':
-                    className = 'icon-fumeitippt';
-                    break;
-                case 'html':
-                    className = 'icon-fumeitihtml';
-                    break;
-                case 'zip':
-                case 'arj':
-                case 'gz':
-                case 'z':
-                case '7z':
-                case 'rar':
-                    className = 'icon-fumeitiyasuowenjian';
-                    break;
-                case 'avi':
-                case 'mpg':
-                case 'mov':
-                case 'swf':
-                case 'mp4':
-                    className = 'icon-fumeitishipinwenjian';
-                    break;
-                case 'wav':
-                case 'aif':
-                case 'au':
-                case 'mp3':
-                case 'ram':
-                case 'wma':
-                case 'mmf':
-                case 'amr':
-                case 'aac':
-                case 'flac':
-                    className = 'icon-fumeitiyinpinwenjian';
-                    break;
-                default:
-                    className = 'icon-fumeititongyongwenjian';
-                    break;
-            }
-            return className;
         },
 
         /**
@@ -605,7 +437,7 @@ export default {
          */
         imgViewDialog_show: function(item) {
             this.$data.imgViewDialogVisible = true;
-            this.$data.imgViewDialog_imgSrc = item.imgUrl;
+            this.$data.imgViewDialog_imgSrc = item.fileUrl;
         },
 
         /**
@@ -624,18 +456,27 @@ export default {
          * @param {Object} msg 消息对象
          */
         sendMsg: function(msg) {
+            var self = this;
             // 1.传递
             this.$emit('sendMsg', {
-                contentType: msg.contentType,
-                content: msg.content
+                msg: msg,
+                successCallbcak: function() {
+                    document.getElementById('common_chat_input').focus();
+                    self.goEnd();
+                }
             });
-            // 2.滚动到底部
+        },
+
+        /**
+         * 聊天记录滚动到底部
+         */
+        goEnd: function() {
             this.$nextTick(() => {
-                document.getElementById('common_chat_input').focus();
                 setTimeout(() => {
                     this.$refs.common_chat_main.scrollTop = this.$refs.common_chat_main.scrollHeight;
                 }, 100);
             });
+            //  this.$refs.common_chat_main.scrollTop = this.$refs.common_chat_main.scrollHeight;
         }
     },
     mounted() {}
@@ -759,52 +600,25 @@ export default {
                                         .file-name {
                                             width: 160px;
                                             display: inline-block;
+                                            color: #333333;
                                             white-space: nowrap;
                                             text-overflow: ellipsis;
                                             overflow: hidden;
                                             line-height: 1.3;
                                         }
-                                        .file-opr {
-                                            margin-top: 10px;
-                                            .uploading {
-                                                .progress-bar {
-                                                    width: 120px;
-                                                    display: inline-block;
-                                                    -webkit-animation: progress-bar-stripes 2s linear infinite;
-                                                    animation: progress-bar-stripes 2s linear infinite;
-                                                    background-image: linear-gradient(
-                                                        45deg,
-                                                        rgba(255, 255, 255, 0.15) 25%,
-                                                        transparent 25%,
-                                                        transparent 50%,
-                                                        rgba(255, 255, 255, 0.15) 50%,
-                                                        rgba(255, 255, 255, 0.15) 75%,
-                                                        transparent 75%,
-                                                        transparent
-                                                    );
-                                                    background-size: 20px 20px;
-                                                    background-color: #20a0ff;
-                                                    height: 7px;
-                                                    border-radius: 10px;
-                                                    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-                                                }
-                                            }
-                                            .error {
-                                                .error-tips {
-                                                    display: inline-block;
-                                                    width: 70px;
-                                                    color: #8d8d8d;
-                                                }
-                                            }
-                                        }
+                                    }
+                                    .file-opr {
+                                        margin-top: 8px;
                                     }
                                     .file-icon {
                                         font-size: 40px;
                                         float: left;
+                                        color: #663399;
                                     }
                                     .file-download {
                                         color: #00a8d7;
                                         cursor: pointer;
+                                        text-decoration: blink;
                                     }
                                 }
                                 .preInput {
@@ -840,6 +654,7 @@ export default {
                         }
                     }
                     .item.server {
+                        margin-right: 5px;
                         .headericon-wrapper {
                             float: right;
                             padding: 0px 18px 0px 13px;
@@ -977,17 +792,20 @@ export default {
 }
 .imgView-dialog {
     background: #00000080;
-    height: 101%;
+    height: 100%;
     .el-dialog {
         max-width: 75%;
-        width: auto;
+        position: relative;
+        background: transparent;
+        box-shadow: none;
         .el-dialog__header {
             display: none;
         }
         .el-dialog__body {
             padding: 0px;
+            text-align: center;
+            position: relative;
             .header {
-                background: transparent;
                 text-align: right;
                 position: relative;
                 height: 0px;
@@ -1000,8 +818,12 @@ export default {
                     cursor: pointer;
                 }
             }
-            .img {
-                width: 100%;
+            .main {
+                .img {
+                    max-width: 100%;
+                    max-height: 100%;
+                    height: 100%;
+                }
             }
         }
     }

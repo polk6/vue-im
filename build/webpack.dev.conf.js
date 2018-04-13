@@ -14,144 +14,130 @@ const HOST = process.env.HOST;
 const PORT = process.env.PORT && Number(process.env.PORT);
 
 const devWebpackConfig = merge(baseWebpackConfig, {
-  module: {
-    rules: utils.styleLoaders({ sourceMap: config.dev.cssSourceMap, usePostCSS: true })
-  },
-  // cheap-module-eval-source-map is faster for development
-  devtool: config.dev.devtool,
-
-  // these devServer options should be customized in /config/index.js
-  devServer: {
-    clientLogLevel: 'warning',
-    historyApiFallback: {
-      rewrites: [{ from: /.*/, to: path.posix.join(config.dev.assetsPublicPath, 'index.html') }]
+    module: {
+        rules: utils.styleLoaders({ sourceMap: config.dev.cssSourceMap, usePostCSS: true })
     },
-    hot: true,
-    contentBase: false, // since we use CopyWebpackPlugin.
-    compress: true,
-    host: HOST || config.dev.host,
-    port: PORT || config.dev.port,
-    open: config.dev.autoOpenBrowser,
-    overlay: config.dev.errorOverlay ? { warnings: false, errors: true } : false,
-    publicPath: config.dev.assetsPublicPath,
-    proxy: config.dev.proxyTable,
-    quiet: true, // necessary for FriendlyErrorsPlugin
-    watchOptions: {
-      poll: config.dev.poll
-    }
-  },
-  plugins: [
-    new webpack.DefinePlugin({
-      'process.env': require('../config/dev.env')
-    }),
-    new webpack.HotModuleReplacementPlugin(),
-    new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
-    new webpack.NoEmitOnErrorsPlugin(),
-    // https://github.com/ampedandwired/html-webpack-plugin
-    new HtmlWebpackPlugin({
-      filename: 'index.html',
-      template: 'index.html',
-      inject: true
-    }),
-    // copy custom static assets
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../static'),
-        to: config.dev.assetsSubDirectory,
-        ignore: ['.*']
-      }
-    ])
-  ]
+    // cheap-module-eval-source-map is faster for development
+    devtool: config.dev.devtool,
+
+    // these devServer options should be customized in /config/index.js
+    devServer: {
+        clientLogLevel: 'warning',
+        historyApiFallback: {
+            rewrites: [{ from: /.*/, to: path.posix.join(config.dev.assetsPublicPath, 'index.html') }]
+        },
+        hot: true,
+        contentBase: false, // since we use CopyWebpackPlugin.
+        compress: true,
+        host: HOST || config.dev.host,
+        port: PORT || config.dev.port,
+        open: config.dev.autoOpenBrowser,
+        overlay: config.dev.errorOverlay ? { warnings: false, errors: true } : false,
+        publicPath: config.dev.assetsPublicPath,
+        proxy: config.dev.proxyTable,
+        quiet: true, // necessary for FriendlyErrorsPlugin
+        watchOptions: {
+            poll: config.dev.poll
+        }
+    },
+    plugins: [
+        new webpack.DefinePlugin({
+            'process.env': require('../config/dev.env')
+        }),
+        new webpack.HotModuleReplacementPlugin(),
+        new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
+        new webpack.NoEmitOnErrorsPlugin(),
+        // https://github.com/ampedandwired/html-webpack-plugin
+        new HtmlWebpackPlugin({
+            filename: 'index.html',
+            template: 'index.html',
+            inject: true
+        }),
+        // copy custom static assets
+        new CopyWebpackPlugin([
+            {
+                from: path.resolve(__dirname, '../static'),
+                to: config.dev.assetsSubDirectory,
+                ignore: ['.*']
+            }
+        ])
+    ]
 });
 
 module.exports = new Promise((resolve, reject) => {
-  portfinder.basePort = process.env.PORT || config.dev.port;
-  portfinder.getPort((err, port) => {
-    if (err) {
-      reject(err);
-    } else {
-      // publish the new Port, necessary for e2e tests
-      process.env.PORT = port;
-      // add port to devServer config
-      devWebpackConfig.devServer.port = port;
+    portfinder.basePort = process.env.PORT || config.dev.port;
+    portfinder.getPort((err, port) => {
+        if (err) {
+            reject(err);
+        } else {
+            // publish the new Port, necessary for e2e tests
+            process.env.PORT = port;
+            // add port to devServer config
+            devWebpackConfig.devServer.port = port;
 
-      // Add FriendlyErrorsPlugin
-      devWebpackConfig.plugins.push(
-        new FriendlyErrorsPlugin({
-          compilationSuccessInfo: {
-            messages: [`Your application is running here: http://${devWebpackConfig.devServer.host}:${port}`]
-          },
-          onErrors: config.dev.notifyOnErrors ? utils.createNotifierCallback() : undefined
-        })
-      );
+            // Add FriendlyErrorsPlugin
+            devWebpackConfig.plugins.push(
+                new FriendlyErrorsPlugin({
+                    compilationSuccessInfo: {
+                        messages: [`Your application is running here: http://${devWebpackConfig.devServer.host}:${port}`]
+                    },
+                    onErrors: config.dev.notifyOnErrors ? utils.createNotifierCallback() : undefined
+                })
+            );
 
-      resolve(devWebpackConfig);
-    }
-  });
+            resolve(devWebpackConfig);
+        }
+    });
 });
 
 // express
 const app = require('express')();
 const fileUpload = require('express-fileupload');
 app.use(fileUpload()); // for parsing multipart/form-data
+app.use(function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'X-Requested-With');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
+    res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(204);
+    } else {
+        next();
+    }
+});
 // 上传文件
 app.post('/upload', function(req, res) {
-  if (!req.files) {
-    return res.status(400).send('No files were uploaded.');
-  }
-
-  // save file
-  // <input type="file" name="uploadFile" />
-  let file = req.files.uploadFile;
-  file.mv(path.resolve(__dirname, '../static/upload/') + '/' + file.name, function(err) {
-    if (err) {
-      return res.status(500).send({
-        code: err.code,
-        data: err,
-        message: '文件上传失败'
-      });
+    if (!req.files) {
+        return res.status(400).send('No files were uploaded.');
     }
-    res.send({
-      code: 0,
-      data: {
-        fileName: file.name,
-        fileURL: `http://${devWebpackConfig.devServer.host}:3000/static/upload/${file.name}`
-      },
-      message: '文件上传成功'
+
+    // save file
+    // <input type="file" name="uploadFile" />
+    let file = req.files.uploadFile;
+    let encodeFileName = Number.parseInt(Date.now() + Math.random()) + file.name;
+    file.mv(path.resolve(__dirname, '../static/upload/') + '/' + encodeFileName, function(err) {
+        if (err) {
+            return res.status(500).send({
+                code: err.code,
+                data: err,
+                message: '文件上传失败'
+            });
+        }
+        res.send({
+            code: 0,
+            data: {
+                fileName: file.name,
+                fileUrl: `http://${devWebpackConfig.devServer.host}:3000/static/upload/${encodeFileName}`
+            },
+            message: '文件上传成功'
+        });
     });
-  });
-});
-app.post('*', function(req, res, next) {
-  console.log('post:' + req.originalUrl);
-  next();
 });
 
 // 获取文件
 app.get('/static/upload/:fileName', function(req, res) {
-  console.log(req.params.fileName);
-  res.sendFile(path.resolve(__dirname, '../static/upload') + '/' + req.params.fileName);
-});
-app.get('/', function(req, res, next) {
-  console.log('get /:' + req.originalUrl);
-  next();
-});
-app.get('*', function(req, res, next) {
-  console.log('get *:' + req.originalUrl);
-  next();
-});
-app.use(function(req, res, next) {
-  const origin = req.get('origin');
-  res.header('Access-Control-Allow-Origin', origin);
-  //res.header('Access-Control-Allow-Credentials', false);
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With');
-  //res.header('Access-Control-Allow-Headers', 'Content-Type');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
-  res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(204);
-  } else {
-    next();
-  }
+    console.log(req.params.fileName);
+    res.sendFile(path.resolve(__dirname, '../static/upload') + '/' + req.params.fileName);
 });
 app.listen(3000);
 
@@ -160,47 +146,90 @@ var http = require('http');
 var server = http.createServer();
 var engine = require('engine.io');
 var eio = engine.attach(server);
-var serverSocketDic = {}; // 客服Socket字典
-var clientSocketDic = {}; // 客户端Socket字典
+var serverChatObj = null; // 服务Chat对象，这里只需要一个
+var clientChatDic = {}; // 客户端Socket字典
 // 开启scoket
 eio.on('connection', function(socket) {
-  console.log('new socket connected');
-  socket.on('message', function(data){
-      console.log(data);
-   });
-  // 服务端新上线
-  socket.on('serverOn', function(msg) {
-    var rs = JSON.parse(msg);
-    console.log('有新的服务端socket连接了，服务端Id：' + rs.serverId);
-    serverSocketDic[rs.serverId] = socket;
-  });
-
-  // 服务端发送了信息
-  socket.on('serverSendMsg', function(msg) {
-    var rs = JSON.parse(msg);
-    console.log('接受到服务端消息: ' + msg);
-    // 服务端接收消息
-    if (clientSocketDic[rs.serverId]) {
-      clientSocketDic[rs.serverId].emit('receiveServerMsg', JSON.stringify(rs));
-    }
-  });
-
-  // 客户端新上线
-  socket.on('clientOn', function(msg) {
-    var rs = JSON.parse(msg);
-    console.log('有新的客户socket连接了，客户Id：' + rs.clientId);
-    clientSocketDic[rs.clientId] = socket;
-  });
-
-  // 客户端发送了信息
-  socket.on('clientSendMsg', function(msg) {
-    var rs = JSON.parse(msg);
-    console.log('接受到客户端消息: ' + rs.data);
-
-    // 服务端接收消息
-    if (serverSocketDic[rs.serverId]) {
-      serverSocketDic[rs.serverId].emit('receiveClientMsg', JSON.stringify(rs));
-    }
-  });
+    socket.on('message', function(message) {
+        console.log(message);
+        message = JSON.parse(message);
+        if (message.type == 'serverOn') {
+            // 服务端新上线
+            console.log('有新的服务端socket连接了，服务端Id：' + message.data.serverChatId);
+            serverChatObj = {
+                serverChatId: message.data.serverChatId,
+                serverChatName: message.data.serverChatName,
+                socket: socket
+            };
+        } else if (message.type == 'serverSendMsg') {
+            // 服务端发送了信息
+            if (clientChatDic[message.data.clientChatId]) {
+                clientChatDic[message.data.clientChatId].socket.send(
+                    JSON.stringify({
+                        type: 'serverSendMsg',
+                        data: {
+                            msg: message.data.msg
+                        }
+                    })
+                );
+            }
+        } else if (message.type == 'clientOn') {
+            // 客户端新上线
+            console.log('有新的客户socket连接了，客户Id：' + message.data.clientChatId);
+            // 1)添加到客户端字典里
+            clientChatDic[message.data.clientChatId] = {
+                clientChatName: message.data.clientChatName,
+                socket: socket
+            };
+            if (serverChatObj == null) {
+                socket.send(
+                    JSON.stringify({
+                        type: 'serverSendMsg',
+                        data: {
+                            msg: {
+                                role: 'sys',
+                                contentType: 'text',
+                                content: '当前没有客服在线'
+                            }
+                        }
+                    })
+                );
+            } else {
+                // 2)通知客户端有客服连接
+                socket.send(
+                    JSON.stringify({
+                        type: 'serverConnected',
+                        data: {
+                            serverChatId: serverChatObj.serverChatId,
+                            serverChatName: serverChatObj.serverChatName
+                        }
+                    })
+                );
+                // 3)通知服务端有客户接入
+                serverChatObj.socket.send(
+                    JSON.stringify({
+                        type: 'clientOn',
+                        data: {
+                            clientChatId: message.data.clientChatId,
+                            clientChatName: message.data.clientChatName
+                        }
+                    })
+                );
+            }
+        } else if (message.type == 'clientSendMsg') {
+            // 客户端发送了信息
+            if (serverChatObj) {
+                serverChatObj.socket.send(
+                    JSON.stringify({
+                        type: 'clientSendMsg',
+                        data: {
+                            clientChatId: message.data.clientChatId,
+                            msg: message.data.msg
+                        }
+                    })
+                );
+            }
+        }
+    });
 });
 server.listen(3001);

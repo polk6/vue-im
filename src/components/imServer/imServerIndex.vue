@@ -1,9 +1,9 @@
-<!-- im入口 -->
+<!-- im服务端入口 -->
 <template>
     <div class="imServerIndex-wrapper">
         <div class="imServerIndex-main">
             <im-record class="item im-record" @selectedChat="selectedChat()"></im-record>
-            <im-chat v-if="storeSelectedChatEn!=null" class="item im-chat"></im-chat>
+            <im-chat v-if="storeSelectedChatEn!=null" ref="im_chat" class="item im-chat" :socket="socket"></im-chat>
         </div>
     </div>
 </template>
@@ -18,7 +18,9 @@ export default {
         imChat: imChat
     },
     data() {
-        return {};
+        return {
+            socket: null
+        };
     },
     computed: {
         storeSelectedChatEn() {
@@ -35,27 +37,61 @@ export default {
          */
         selectedChat: function() {},
 
+        /**
+         * 注册socket
+         */
         regSocket: function() {
-            var serverChatInfo = this.$store.imServerStore.getters.serverChatInfo;
-            var socket = require('engine.io-client')('http://localhost:3001');
-            socket.on('open', function() {
-                console.log('connected');
-                socket.send('nihao');
+            var self = this;
+            self.$data.socket = require('engine.io-client')('http://localhost:3001');
+            self.$data.socket.on('open', function() {
+                var serverChatInfo = self.$store.imServerStore.getters.serverChatInfo;
                 // 注册
-                socket.emit('serverOn', {
-                    serverChatId: serverChatInfo.serverChatId,
-                    serverChatName: serverChatInfo.serverChatName
-                });
+                self.$data.socket.send(
+                    JSON.stringify({
+                        type: 'serverOn',
+                        data: {
+                            serverChatId: serverChatInfo.serverChatId,
+                            serverChatName: serverChatInfo.serverChatName
+                        }
+                    })
+                );
 
-                // 接收client消息
-                socket.on('receiveClientMsg', function(data) {
-                    console.log(data);
+                // 【接收消息】
+                self.$data.socket.on('message', function(message) {
+                    message = JSON.parse(message);
+                    if (message.type == 'clientOn') {
+                        // 1.客户端新上线
+                        // 1)增加客户列表
+                        self.$store.imServerStore.commit('addChat', {
+                            chatEn: {
+                                chatId: message.data.clientChatId,
+                                chatName: message.data.clientChatName
+                            }
+                        });
+                        self.$store.imServerStore.dispatch('addChatMsg', {
+                            chatId: message.data.clientChatId,
+                            msg: {
+                                role: 'sys',
+                                contentType: 'text',
+                                content: '新客户接入'
+                            }
+                        });
+                    } else if (message.type == 'clientSendMsg') {
+                        // 2.客户端发送了信息
+                        console.log(message.data);
+                        self.$store.imServerStore.dispatch('addChatMsg', {
+                            chatId: message.data.clientChatId,
+                            msg: message.data.msg,
+                            successCallback: function() {
+                                self.$refs.im_chat.goEnd();
+                            }
+                        });
+                    }
                 });
             });
         }
     },
     mounted() {
-        console.log(1);
         this.regSocket();
     }
 };

@@ -4,7 +4,7 @@
         <!-- 头部 -->
         <header class="imChat-header">
             <div class="inner-wrapper">
-                <span class="name">{{storeSelectedChatEn.userName}}</span>
+                <span class="name">{{storeSelectedChatEn.chatName}}</span>
             </div>
             <div class="opr-wrapper" v-show="storeSelectedChatEn.state=='on'">
                 <el-button type="text" @click="close()">结束会话</el-button>
@@ -12,7 +12,7 @@
         </header>
         <main class="imChat-main">
             <!-- 聊天框区域 -->
-            <common-chat class="" :chatEn="storeSelectedChatEn" @sendMsg="sendMsg"></common-chat>
+            <common-chat ref="common_chat" :chatEn="storeSelectedChatEn" @sendMsg="sendMsg"></common-chat>
         </main>
     </div>
 </template>
@@ -23,6 +23,12 @@ import commonChat from '@/components/common/common_chat.vue';
 export default {
     components: {
         commonChat: commonChat
+    },
+    props: {
+        socket: {
+            required: true,
+            type: Object
+        }
     },
     data() {
         return {};
@@ -46,17 +52,34 @@ export default {
 
         /**
          * 发送消息
-         * @param {Object} msg 消息对象
+         * @param {Object} rs 回调对象
          */
-        sendMsg: function(msgObj) {
+        sendMsg: function(rs) {
+            var msg = rs.msg;
+            msg.role = 'server';
+            // 1.socket发送消息
+            this.socket.send(
+                JSON.stringify({
+                    type: 'serverSendMsg',
+                    data: {
+                        clientChatId: this.storeSelectedChatEn.chatId,
+                        msg: msg
+                    }
+                })
+            );
+
+            // 2.附加到此chat对象的msg集合里
             this.$store.imServerStore.dispatch('addChatMsg', {
                 chatId: this.storeSelectedChatEn.chatId,
-                msg: {
-                    role: 'server',
-                    contentType: msgObj.contentType,
-                    content: msgObj.content
+                msg: msg,
+                successCallback: function() {
+                    rs.successCallbcak && rs.successCallbcak();
                 }
             });
+        },
+
+        goEnd: function() {
+            this.$refs.common_chat.goEnd();
         }
     },
     mounted() {}
