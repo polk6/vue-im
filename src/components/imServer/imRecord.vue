@@ -2,18 +2,19 @@
 <template>
     <div class="imRecord-wrapper">
         <header class="header">
-            <p>
-                <span class="">客服姓名：</span>
-            </p>
+            <div class="kf-info-wrapper">
+                <img class="kf-avatar" :src="storeServerChatEn.avatarUrl" />
+                <span class="kf-name position-h-v-mid">{{storeServerChatEn.serverChatName}}</span>
+            </div>
         </header>
         <main class="main">
             <div v-if="storeCurrentChatEnlist.length>0" class="item-list">
                 <div class="item" v-for="(tmpEn, index) in storeCurrentChatEnlist" :key="index" @click="selectChat(tmpEn)" v-bind:class="{ active: selectedChatEn!=null && tmpEn.chatId==selectedChatEn.chatId}">
                     <div class="followicon-wrapper">
-                        <i class="iconfont icon-zhidingwujiaoxing" :class="{ active: tmpEn.isFollow}" @click.stop="toggleFollowIcon(tmpEn)"></i>
+                        <i class="iconfont icon-zhidingwujiaoxing position-h-v-mid" :class="{ active: tmpEn.isFollow}" @click.stop="toggleFollowIcon(tmpEn)"></i>
                     </div>
                     <div class="platicon-wrapper">
-                        <div class="header-img" :class="getBgClass(tmpEn.chatName)">{{tmpEn.chatName.substr(0,1)}}</div>
+                        <div class="header-img position-h-v-mid" :class="getBgClass(tmpEn.chatName)">{{tmpEn.chatName.substr(0,1)}}</div>
                     </div>
                     <div class="info-wrapper">
                         <p class="first-p">
@@ -49,6 +50,9 @@ export default {
         // 当前会话列表
         storeCurrentChatEnlist() {
             return this.$store.imServerStore.getters.currentChatEnlist;
+        },
+        storeServerChatEn() {
+            return this.$store.imServerStore.getters.serverChatEn;
         }
     },
     watch: {},
@@ -103,6 +107,19 @@ export default {
     border: 0px;
     & > .header {
         height: 50px;
+        .kf-info-wrapper {
+            position: relative;
+            width: 150px;
+            height: 50px;
+            padding: 0 20px;
+            .kf-avatar {
+                width: 50px;
+                height: 50px;
+            }
+            .kf-name{
+                font-size: 16px;
+            }
+        }
     }
     & > .main {
         height: calc(~'100% - 50px');
@@ -111,10 +128,11 @@ export default {
             height: calc(~'100% - 46px');
             overflow-y: auto;
             .item {
+                position: relative;
                 height: 63px;
-                cursor: pointer;
-                border-bottom: 1px solid #e6e6e6;
                 padding: 0px;
+                border-bottom: 1px solid #e6e6e6;
+                cursor: pointer;
                 &.active,
                 &:hover {
                     background-color: #0095ff;
@@ -128,13 +146,13 @@ export default {
                     }
                 }
                 .followicon-wrapper {
+                    position: relative;
                     float: left;
-                    padding: 24px 0px;
-                    padding-left: 10px;
-                    min-width: 12px;
+                    width: 30px;
+                    height: 100%;
                     .iconfont {
-                        font-size: 12px;
                         display: none;
+                        font-size: 12px;
                         color: #eaf4fb;
                         &.active {
                             color: #f9ce1d;
@@ -145,12 +163,13 @@ export default {
                 .platicon-wrapper {
                     float: left;
                     position: relative;
-                    margin: 13px 5px;
+                    width: 50px;
+                    height: 100%;
                     .header-img {
-                        color: #fff;
                         padding: 10px;
-                        border-radius: 50%;
+                        color: #fff;
                         font-size: 16px;
+                        border-radius: 50%;
                         &.bg0 {
                             background-color: #ef7777;
                         }

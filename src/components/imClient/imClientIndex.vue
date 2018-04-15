@@ -5,7 +5,7 @@
 
         </header>
         <main class="imClientIndex-main">
-            <common-chat ref="common_chat" :chatEn="clientChatEn" @sendMsg="sendMsg"></common-chat>
+            <common-chat ref="common_chat" :chatEn="clientChatEn" :oprRoleName="'client'" @sendMsg="sendMsg"></common-chat>
         </main>
     </div>
 </template>
@@ -26,9 +26,6 @@ export default {
                 inputContent: '',
                 msgList: [],
                 state: 'on',
-                lastMsgTime: new Date(),
-                lastMsgContent: '你好，我想咨询',
-                newMsgCount: 2,
                 lastMsgShowTime: null // 最后一个消息的显示时间
             }, // 当前账号的信息
             serverChatEn: {} // 服务端chat信息
@@ -71,40 +68,33 @@ export default {
          */
         regSocket: function() {
             var self = this;
-            self.$data.socket = require('engine.io-client')('http://localhost:3001');
-            self.$data.socket.on('open', function() {
+            self.$data.socket = require('socket.io-client')('http://localhost:3001');
+            self.$data.socket.on('connect', function() {
                 // 上线
-                self.$data.socket.send(
-                    JSON.stringify({
-                        type: 'clientOn',
-                        data: {
-                            clientChatId: self.$data.clientChatEn.clientChatId,
-                            clientChatName: self.$data.clientChatEn.clientChatName
-                        }
-                    })
-                );
+                self.$data.socket.emit('clientOn', {
+                    clientChatId: self.$data.clientChatEn.clientChatId,
+                    clientChatName: self.$data.clientChatEn.clientChatName
+                });
 
-                // 【接收消息】
-                self.$data.socket.on('message', function(message) {
-                    message = JSON.parse(message);
-                    if (message.type == 'serverConnected') {
-                        // 1.服务端连接成功
-                        // 1)获取客服消息
-                        self.$data.serverChatEn.serverChatId = message.data.serverChatId;
-                        self.$data.serverChatEn.serverChatName = message.data.serverChatName;
-                        // 2)添加消息
-                        self.addChatMsg({
-                            role: 'sys',
-                            contentType: 'text',
-                            content: '客服 ' + message.data.serverChatName + ' 为你服务'
-                        });
-                    } else if (message.type == 'serverSendMsg') {
-                        // 2.服务端发送了消息
-                        var msg = message.data.msg;
-                        self.addChatMsg(message.data.msg, () => {
-                            self.$refs.common_chat.goEnd();
-                        });
-                    }
+                // 服务端链接成功
+                self.$data.socket.on('serverConnected', function(data) {
+                    // 1)获取客服消息
+                    self.$data.serverChatEn.serverChatId = data.serverChatId;
+                    self.$data.serverChatEn.serverChatName = data.serverChatName;
+
+                    // 2)添加消息
+                    self.addChatMsg({
+                        role: 'sys',
+                        contentType: 'text',
+                        content: '客服 ' + data.serverChatName + ' 为你服务'
+                    });
+                });
+
+                //  接受服务端信息
+                self.$data.socket.on('serverSendMsg', function(data) {
+                    self.addChatMsg(data.msg, () => {
+                        self.$refs.common_chat.goEnd();
+                    });
                 });
             });
         },
@@ -159,17 +149,12 @@ export default {
             var msg = rs.msg;
             msg.role = 'client';
             // 1.socket发送消息
-            this.$data.socket.send(
-                JSON.stringify({
-                    type: 'clientSendMsg',
-                    data: {
-                        serverChatId: self.$data.serverChatEn.serverChatId,
-                        clientChatId: self.$data.clientChatEn.clientChatId,
-                        msg: msg
-                    }
-                })
-            );
-
+            this.$data.socket.emit('clientSendMsg', {
+                serverChatId: self.$data.serverChatEn.serverChatId,
+                clientChatId: self.$data.clientChatEn.clientChatId,
+                msg: msg
+            });
+            // 2.添加到消息集合李
             this.addChatMsg(msg, () => {
                 this.$refs.common_chat.goEnd();
             });

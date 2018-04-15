@@ -15,14 +15,7 @@
                                 </div>
                             </div>
                             <!-- 客户、客服 -->
-                            <div v-else class="item" :class="item.role">
-                                <!-- 头像 -->
-                                <div class="headericon-wrapper">
-                                    <i v-if="item.role=='client'" class="iconfont"></i>
-                                    <div v-else-if="item.role=='server'">
-                                        <img class="kf-img" src="">
-                                    </div>
-                                </div>
+                            <div v-else class="item" :class="{ sender: item.role == oprRoleName, receiver: item.role != oprRoleName }">
                                 <div class="info-wrapper" :class="item.state">
                                     <!-- 1)文本类型 -->
                                     <div v-if="item.contentType=='text'" class="item-content common_chat_emoji-wrapper-global">
@@ -106,7 +99,12 @@ export default {
                 inputContent: '',
                 msgList: []
             }
-        }
+        },
+        oprRoleName: {
+            required: true,
+            type: String,
+            default: ''
+        } // 操作者名称；e.g. server:服务端、client:客服端
     },
     data() {
         return {
@@ -546,8 +544,8 @@ export default {
                             }
                         }
                     }
-                    .client,
-                    .server {
+                    .receiver,
+                    .sender {
                         font-size: 12px;
                         margin-top: 18px;
                         .headericon-wrapper {
@@ -633,7 +631,7 @@ export default {
                             }
                         }
                     }
-                    .item.client {
+                    .item.receiver {
                         margin-left: 5px;
                         .headericon-wrapper {
                             padding: 15px 18px 15px 13px;
@@ -653,7 +651,7 @@ export default {
                             }
                         }
                     }
-                    .item.server {
+                    .item.sender {
                         margin-right: 5px;
                         .headericon-wrapper {
                             float: right;

@@ -9,25 +9,42 @@
     <script src="https://cdn.bootcss.com/socket.io/2.0.4/socket.io.js"></script>
     <script src="https://cdn.bootcss.com/engine.io-client/3.1.4/engine.io.js"></script>
     <script>
-        var socket = new eio.Socket('http://localhost:3000');
-        socket.on('open', function() {
-            console.log('connected');
-            // 注册
-            socket.emit('serverOn', {
-                serverChatId: serverChatInfo.serverChatId,
-                serverChatName: serverChatInfo.serverChatName
-            });
+        var connectEngineSocket = function() {
+            var socket = new eio.Socket('http://localhost:3000');
+            socket.on('open', function() {
+                console.log('connected');
+                // 注册
+                socket.emit('serverOn', {
+                    serverChatId: serverChatInfo.serverChatId,
+                    serverChatName: serverChatInfo.serverChatName
+                });
 
-            // 接收client消息
-            socket.on('receiveClientMsg', function(data) {
-                console.log(data);
+                // 接收client消息
+                socket.on('receiveClientMsg', function(data) {
+                    console.log(data);
+                });
             });
-        });
+        }
+
+        var connectSocket = function() {
+            var socket = io('http://localhost:3001');
+            socket.on('connect', function() {});
+            socket.on('event', function(data) {});
+            socket.on('disconnect', function() {});
+            socket.emit('serverOn', {
+                type: 1,
+                data: {
+                    a: 1,
+                    b: 2
+                }
+            });
+        }
     </script>
 </head>
 
 <body>
-12
+    <button onclick="connectSocket()">socket.io</button>
+    <button onclick="connectEngineSocket()">engine</button>
 </body>
 
 </html>

@@ -25,9 +25,6 @@ export default {
     computed: {
         storeSelectedChatEn() {
             return this.$store.imServerStore.getters.selectedChatEn;
-        },
-        stroeServerChatInfo() {
-            return this.$store.imServerStore.getters.serverChatInfo;
         }
     },
     watch: {},
@@ -36,63 +33,9 @@ export default {
          * 选中了会话
          */
         selectedChat: function() {},
-
-        /**
-         * 注册socket
-         */
-        regSocket: function() {
-            var self = this;
-            self.$data.socket = require('engine.io-client')('http://localhost:3001');
-            self.$data.socket.on('open', function() {
-                var serverChatInfo = self.$store.imServerStore.getters.serverChatInfo;
-                // 注册
-                self.$data.socket.send(
-                    JSON.stringify({
-                        type: 'serverOn',
-                        data: {
-                            serverChatId: serverChatInfo.serverChatId,
-                            serverChatName: serverChatInfo.serverChatName
-                        }
-                    })
-                );
-
-                // 【接收消息】
-                self.$data.socket.on('message', function(message) {
-                    message = JSON.parse(message);
-                    if (message.type == 'clientOn') {
-                        // 1.客户端新上线
-                        // 1)增加客户列表
-                        self.$store.imServerStore.commit('addChat', {
-                            chatEn: {
-                                chatId: message.data.clientChatId,
-                                chatName: message.data.clientChatName
-                            }
-                        });
-                        self.$store.imServerStore.dispatch('addChatMsg', {
-                            chatId: message.data.clientChatId,
-                            msg: {
-                                role: 'sys',
-                                contentType: 'text',
-                                content: '新客户接入'
-                            }
-                        });
-                    } else if (message.type == 'clientSendMsg') {
-                        // 2.客户端发送了信息
-                        console.log(message.data);
-                        self.$store.imServerStore.dispatch('addChatMsg', {
-                            chatId: message.data.clientChatId,
-                            msg: message.data.msg,
-                            successCallback: function() {
-                                self.$refs.im_chat.goEnd();
-                            }
-                        });
-                    }
-                });
-            });
-        }
     },
     mounted() {
-        this.regSocket();
+        this.$store.imServerStore.dispatch('regSocket');
     }
 };
 </script>

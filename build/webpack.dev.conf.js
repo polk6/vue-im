@@ -142,93 +142,66 @@ app.get('/static/upload/:fileName', function(req, res) {
 app.listen(3000);
 
 // socket
-var http = require('http');
-var server = http.createServer();
-var engine = require('engine.io');
-var eio = engine.attach(server);
-var serverChatObj = null; // 服务Chat对象，这里只需要一个
+var server = require('http').createServer();
+var io = require('socket.io')(server);
+var serverChatObj = null; // 服务端Chat对象，这里只需要一个
 var clientChatDic = {}; // 客户端Socket字典
-// 开启scoket
-eio.on('connection', function(socket) {
-    socket.on('message', function(message) {
-        console.log(message);
-        message = JSON.parse(message);
-        if (message.type == 'serverOn') {
-            // 服务端新上线
-            console.log('有新的服务端socket连接了，服务端Id：' + message.data.serverChatId);
-            serverChatObj = {
-                serverChatId: message.data.serverChatId,
-                serverChatName: message.data.serverChatName,
-                socket: socket
-            };
-        } else if (message.type == 'serverSendMsg') {
-            // 服务端发送了信息
-            if (clientChatDic[message.data.clientChatId]) {
-                clientChatDic[message.data.clientChatId].socket.send(
-                    JSON.stringify({
-                        type: 'serverSendMsg',
-                        data: {
-                            msg: message.data.msg
-                        }
-                    })
-                );
-            }
-        } else if (message.type == 'clientOn') {
-            // 客户端新上线
-            console.log('有新的客户socket连接了，客户Id：' + message.data.clientChatId);
-            // 1)添加到客户端字典里
-            clientChatDic[message.data.clientChatId] = {
-                clientChatName: message.data.clientChatName,
-                socket: socket
-            };
-            if (serverChatObj == null) {
-                socket.send(
-                    JSON.stringify({
-                        type: 'serverSendMsg',
-                        data: {
-                            msg: {
-                                role: 'sys',
-                                contentType: 'text',
-                                content: '当前没有客服在线'
-                            }
-                        }
-                    })
-                );
-            } else {
-                // 2)通知客户端有客服连接
-                socket.send(
-                    JSON.stringify({
-                        type: 'serverConnected',
-                        data: {
-                            serverChatId: serverChatObj.serverChatId,
-                            serverChatName: serverChatObj.serverChatName
-                        }
-                    })
-                );
-                // 3)通知服务端有客户接入
-                serverChatObj.socket.send(
-                    JSON.stringify({
-                        type: 'clientOn',
-                        data: {
-                            clientChatId: message.data.clientChatId,
-                            clientChatName: message.data.clientChatName
-                        }
-                    })
-                );
-            }
-        } else if (message.type == 'clientSendMsg') {
-            // 客户端发送了信息
-            if (serverChatObj) {
-                serverChatObj.socket.send(
-                    JSON.stringify({
-                        type: 'clientSendMsg',
-                        data: {
-                            clientChatId: message.data.clientChatId,
-                            msg: message.data.msg
-                        }
-                    })
-                );
-            }
+io.on('connection', function(socket) {
+    // 服务端chat新上线
+    socket.on('serverOn', function(data) {
+        console.log('有新的服务端socket连接了，服务端Id：' + data.serverChatId);
+        serverChatObj = {
+            serverChatId: data.serverChatId,
+            serverChatName: data.serverChatName,
+            socket: socket
+        };
+    });
+
+    // 服务端chat发送了信息
+    socket.on('serverSendMsg', function(data) {
+        if (clientChatDic[data.clientChatId]) {
+            clientChatDic[data.clientChatId].socket.emit('serverSendMsg', { msg: data.msg });
+        }
+    });
+
+    // 客户端chat新上线
+    socket.on('clientOn', function(data) {
+        console.log('有新的客户socket连接了，客户Id：' + data.clientChatId);
+        // 1)添加到客户端字典里
+        clientChatDic[data.clientChatId] = {
+            clientChatName: data.clientChatName,
+            socket: socket
+        };
+        if (serverChatObj == null) {
+            socket.emit('serverSendMsg', {
+                msg: {
+                    role: 'sys',
+                    contentType: 'text',
+                    content: '当前没有客服在线'
+                }
+            });
+        } else {
+            // 2)通知客户端有客服连接
+            socket.emit('serverConnected', {
+                serverChatId: serverChatObj.serverChatId,
+                serverChatName: serverChatObj.serverChatName
+            });
+            // 3)通知服务端有客户接入
+            serverChatObj.socket.emit('clientOn', {
+                clientChatId: data.clientChatId,
+                clientChatName: data.clientChatName
+            });
+        }
+    });
+
+    // 客户端chat发送了信息
+    socket.on('clientSendMsg', function(data) {
+        // 客户端发送了信息
+        if (serverChatObj) {
+            serverChatObj.socket.emit('clientSendMsg', {
+                clientChatId: data.clientChatId,
+                msg: data.msg
+            });
         }
     });
 });

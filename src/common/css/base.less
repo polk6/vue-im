@@ -24,50 +24,36 @@
     .red {
         color: red;
     }
-    .icon-fumeititupian {
-        color: #15c3aa;
-    }
-    .icon-fumeitiword {
-        color: #1ca9f7;
-    }
-    .icon-fumeitiexcel {
-        color: #50bc55;
-    }
-    .icon-fumeitipdf {
-        color: #c90000;
-    }
-    .icon-fumeitippt {
-        color: #ff6c00;
-    }
-    .icon-fumeitihtml {
-        color: #add4d8;
-    }
-    .icon-fumeitiyasuowenjian {
-        color: #f9d746;
-    }
-    .icon-fumeitishipinwenjian {
-        color: #f9a138;
-    }
-    .icon-fumeitiyinpinwenjian {
-        color: #56ccaa;
-    }
-    .icon-fumeititongyongwenjian {
-        color: #b0bfc1;
-    }
-     ::-webkit-scrollbar {
+    ::-webkit-scrollbar {
         width: 10px;
         background: transparent;
     }
-     ::-webkit-scrollbar-track-piece {
+    ::-webkit-scrollbar-track-piece {
         background: none;
     }
-     ::-webkit-scrollbar-thumb {
+    ::-webkit-scrollbar-thumb {
         height: 50px;
         border: 2px solid rgba(0, 0, 0, 0);
         border-radius: 12px;
         background-clip: padding-box;
         background-color: #ccd4d4;
         box-shadow: inset -1px -1px 0px #ccd4d4, inset 1px 1px 0px #ccd4d4;
+    }
+    .position-h-mid {
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, 0);
+    }
+    .position-v-mid {
+        position: absolute;
+        left: 50%;
+        transform: translate(0, -50%);
+    }
+    .position-h-v-mid {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
     }
 }
 

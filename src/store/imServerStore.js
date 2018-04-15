@@ -9,26 +9,16 @@ import ak from '@/common/ak.js';
 Vue.use(Vuex);
 export const imServerStore = new Vuex.Store({
     state: {
-        serverChatInfo: {
+        serverChatEn: {
             serverChatId: Number.parseInt(Date.now() + Math.random()),
-            serverChatName: '小P'
+            serverChatName: '小P',
+            avatarUrl: '/static/image/im_server_avatar.png'
         },
         selectedChatEn: null, // 选取的会话对象
-        currentChatEnlist: [
-            {
-                chatId: Number.parseInt(Date.now() + Math.random()),
-                chatName: '张三',
-                inputContent: '',
-                msgList: [],
-                state: 'on',
-                lastMsgTime: new Date(),
-                lastMsgContent: '你好，我想咨询',
-                newMsgCount: 2
-            }
-        ], // 当前chat实体集合
+        currentChatEnlist: [], // 当前chat实体集合
         notificationChatEnlist: [], // 通知chat实体集合
-        changeSelectIMDelegate: null, // 更改选中im的委托
-        haveNewMsgDelegate: null // 当前已选中的用户含有新消息
+        haveNewMsgDelegate: null, // 当前已选中的用户含有新消息
+        socket: null
     },
     mutations: {
         /**
@@ -50,11 +40,11 @@ export const imServerStore = new Vuex.Store({
         },
 
         /**
-         * 触发选择im
+         * 触发当前选择的chat含有新的消息
          * @param {Object} payload 载荷对象
          */
-        triggerChangeSelectIMDelegate: function(state, payload) {
-            state.changeSelectIMDelegate = Date.now();
+        triggerHaveNewMsgDelegate: function(state, payload) {
+            state.haveNewMsgDelegate = Date.now();
         },
 
         /**
@@ -70,8 +60,8 @@ export const imServerStore = new Vuex.Store({
             // 1.首先按最后一次更新时间排序
             for (var i = 0; i < enlist.length; i++) {
                 for (var j = i; j < enlist.length; j++) {
-                    var iTimeSpan = Date.parse('2017-03-31 ' + enlist[i].lastMsgTime);
-                    var jTimeSpan = Date.parse('2017-03-31 ' + enlist[j].lastMsgTime);
+                    var iTimeSpan = Date.parse(enlist[i].lastMsgTime);
+                    var jTimeSpan = Date.parse(enlist[j].lastMsgTime);
                     if (iTimeSpan < jTimeSpan) {
                         var tmp = enlist[i];
                         enlist[i] = enlist[j];
@@ -227,6 +217,7 @@ export const imServerStore = new Vuex.Store({
                 if (context.state.selectedChatEn && chatEn.chatId == context.state.selectedChatEn.chatId) {
                     chatEn.newMsgCount = 0;
                     context.state.selectedChatEn = Object.assign({}, chatEn);
+                    context.commit('triggerHaveNewMsgDelegate');
                 } else {
                     chatEn.newMsgCount++;
                 }
@@ -265,21 +256,6 @@ export const imServerStore = new Vuex.Store({
                         state.currentChatEnlist[i] = state.selectedChatEn;
                         break;
                     }
-                }
-
-                context.commit('triggerChangeSelectIMDelegate');
-                context.dispatch('refreshMenuOfMsgCount');
-            });
-        },
-
-        /**
-         * 刷新菜单上的消息总数
-         */
-        refreshMenuOfMsgCount: function(context, payload) {
-            var allNewMsgCount = 0;
-            context.state.currentChatEnlist.forEach((item) => {
-                if (Number.isInteger(item.newMsgCount)) {
-                    allNewMsgCount += item.newMsgCount;
                 }
             });
         },
@@ -390,6 +366,58 @@ export const imServerStore = new Vuex.Store({
 
                 window.imServerStore_notificationList.push(notification);
             }
+        },
+
+        /**
+         * 注册socket
+         */
+        regSocket: function(context, payload) {
+            context.state.socket = require('socket.io-client')('http://localhost:3001');
+            context.state.socket.on('connect', function() {
+                // 服务端上线
+                context.state.socket.emit('serverOn', {
+                    serverChatId: context.state.serverChatEn.serverChatId,
+                    serverChatName: context.state.serverChatEn.serverChatName
+                });
+
+                // 客户端上线
+                context.state.socket.on('clientOn', function(data) {
+                    // 1)增加客户列表
+                    context.commit('addChat', {
+                        chatEn: {
+                            chatId: data.clientChatId,
+                            chatName: data.clientChatName
+                        }
+                    });
+                    // 2)增加消息
+                    context.dispatch('addChatMsg', {
+                        chatId: data.clientChatId,
+                        msg: {
+                            role: 'sys',
+                            contentType: 'text',
+                            content: '新客户接入'
+                        }
+                    });
+                });
+
+                // 客户端发送了信息
+                context.state.socket.on('clientSendMsg', function(data) {
+                    context.dispatch('addChatMsg', {
+                        chatId: data.clientChatId,
+                        msg: data.msg
+                    });
+                });
+            });
+        },
+
+        /**
+         * 发送消息
+         */
+        sendMsg: function(context, { clientChatId, msg }) {
+            context.state.socket.emit('serverSendMsg', {
+                clientChatId: clientChatId,
+                msg: msg
+            });
         }
     },
     getters: {
@@ -408,17 +436,17 @@ export const imServerStore = new Vuex.Store({
         },
 
         /**
-         * 是否更改选中im
+         * 选中的chat含有新消息
          */
-        changeSelectIMDelegate: function(state) {
-            return state.changeSelectIMDelegate;
+        haveNewMsgDelegate: function(state) {
+            return state.haveNewMsgDelegate;
         },
 
         /**
          * 客服chat信息
          */
-        serverChatInfo: function(state) {
-            return state.serverChatInfo;
+        serverChatEn: function(state) {
+            return state.serverChatEn;
         }
     }
 });

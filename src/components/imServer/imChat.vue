@@ -12,7 +12,7 @@
         </header>
         <main class="imChat-main">
             <!-- 聊天框区域 -->
-            <common-chat ref="common_chat" :chatEn="storeSelectedChatEn" @sendMsg="sendMsg"></common-chat>
+            <common-chat ref="common_chat" :chatEn="storeSelectedChatEn" :oprRoleName="'server'" @sendMsg="sendMsg"></common-chat>
         </main>
     </div>
 </template>
@@ -24,21 +24,25 @@ export default {
     components: {
         commonChat: commonChat
     },
-    props: {
-        socket: {
-            required: true,
-            type: Object
-        }
-    },
     data() {
         return {};
     },
     computed: {
         storeSelectedChatEn() {
             return this.$store.imServerStore.getters.selectedChatEn;
+        },
+        storeHaveNewMsgDelegate() {
+            return this.$store.imServerStore.getters.haveNewMsgDelegate;
         }
     },
-    watch: {},
+    watch: {
+        storeSelectedChatEn(value) {
+            this.$refs.common_chat.goEnd();
+        },
+        storeHaveNewMsgDelegate(value) {
+            this.$refs.common_chat.goEnd();
+        }
+    },
     methods: {
         /**
          * 结束
@@ -58,15 +62,10 @@ export default {
             var msg = rs.msg;
             msg.role = 'server';
             // 1.socket发送消息
-            this.socket.send(
-                JSON.stringify({
-                    type: 'serverSendMsg',
-                    data: {
-                        clientChatId: this.storeSelectedChatEn.chatId,
-                        msg: msg
-                    }
-                })
-            );
+            this.$store.imServerStore.dispatch('sendMsg', {
+                clientChatId: this.storeSelectedChatEn.chatId,
+                msg: msg
+            });
 
             // 2.附加到此chat对象的msg集合里
             this.$store.imServerStore.dispatch('addChatMsg', {
