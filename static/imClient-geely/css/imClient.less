@@ -1,0 +1,1271 @@
+// 公共类
+body {
+    font-family: 'Microsoft YaHei', 'CaviarDreams Bold', Helvetica, Arial, sans-serif, 'STHeiti';
+    [v-cloak] {
+        display: none;
+    }
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    .hide {
+        display: none !important;
+    }
+    .show {
+        display: initial !important;
+    }
+    .float-left {
+        float: left;
+    }
+    .float-right {
+        float: right;
+    }
+    .text-right {
+        text-align: right;
+    }
+    .text-center {
+        text-align: center;
+    }
+    .text-left {
+        text-align: left;
+    }
+    .red {
+        color: red;
+    }
+    ::-webkit-scrollbar {
+        width: 10px;
+        background: transparent;
+    }
+    ::-webkit-scrollbar-track-piece {
+        background: none;
+    }
+    ::-webkit-scrollbar-thumb {
+        height: 50px;
+        border: 2px solid rgba(0, 0, 0, 0);
+        border-radius: 12px;
+        background-clip: padding-box;
+        background-color: #ccd4d4;
+        box-shadow: inset -1px -1px 0px #ccd4d4, inset 1px 1px 0px #ccd4d4;
+    }
+    .position-h-mid {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%, 0);
+    }
+    .position-v-mid {
+        position: absolute;
+        top: 50%;
+        transform: translate(0, -50%);
+    }
+    .position-h-v-mid {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+}
+
+// elemUI相关
+body {
+    .el-button--text {
+        margin: 0px;
+        padding: 0px;
+        color: #00a8d7;
+    }
+    .el-button--primary {
+        background: #1072B5!important;
+        color: #ffffff!important;
+        border-color: #1072B5!important;
+        &.is-disabled {
+            color: #ccc !important;
+            cursor: not-allowed;
+            background-image: none;
+            border-color: #ccc !important;
+        }
+    }
+    .el-textarea__inner {
+        resize: none;
+    }
+    .el-select,
+    .el-slider__runway {
+        z-index: 0;
+    }
+    .el-select {
+        .el-tag--primary {
+            background-color: #f4f4f4;
+            border-color: #dfe4e6;
+            color: #6e6e6e;
+        }
+        &:hover {
+            .el-input__inner {
+                border-color: #00a8d7;
+            }
+        }
+    }
+    .el-dropdown {
+        .el-icon-caret-bottom {
+            font-size: 12px;
+            margin-left: 16px;
+        }
+    }
+    .el-tag {
+        background-color: #f4f4f4;
+        color: #454545;
+        border-color: #e6e6e6;
+        padding: 0px 10px;
+    }
+    .el-pager {
+        li.active {
+            border-color: #00a8d7;
+            background-color: #00a8d7;
+        }
+    }
+    .el-dialog__wrapper {
+        overflow: hidden;
+    }
+    .el-form {
+        .el-form-item.is-success .el-input__inner {
+            border-color: #000000;
+        }
+        .el-form-item__content {
+            .el-input {
+                .el-input__inner {
+                    color: #000000;
+                    background: transparent;
+                    border-top-width: 0px;
+                    border-right-width: 0px;
+                    border-radius: 0;
+                }
+            }
+        }
+    }
+}
+
+.imClient-wrapper {
+    width: 850px;
+    height: 100%;
+    margin: 10px auto 0px;
+    overflow: hidden;
+    box-shadow: 0 1px 5px 2px #ccc;
+    .imClient-header {
+        position: relative;
+        height: 35px;
+        box-sizing: border-box;
+        background: #1072B5;
+        font-size: 13px;
+        color: #ffffff;
+        .name-wrapper {
+            margin-left: 20px;
+        }
+        .logo {
+            height: 45px;
+            width: auto;
+        }
+        .close-wrapper {
+            right: 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    }
+    .imClient-main {
+        max-width: 100%;
+        height: 520px;
+        position: relative;
+        & > .item {
+            float: left;
+            height: 100%;
+            border-top-width: 0px;
+            border-right-width: 0px;
+            box-sizing: border-box;
+            &:last-child {
+                border-right-width: 1px;
+            }
+        }
+        & > .imClientChat-wrapper {
+            width: calc(~'100% - 300px');
+        }
+        & > .imClientInfo-wrapper {
+            width: 300px;
+        }
+    }
+}
+
+// 聊天框
+.imClientChat-wrapper {
+    @keyframes progress-bar-stripes {
+        from {
+            background-position: 40px 0;
+        }
+        to {
+            background-position: 0 0;
+        }
+    }
+    position: relative;
+    float: left;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-size: 12px;
+    border: 0px;
+    .imClientChat-main {
+        position: relative;
+        height: calc(~'100% - 170px');
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: #ffffff;
+        .imClientChat-main-header {
+            text-align: center;
+            padding-top: 14px;
+            .el-button {
+                font-size: 12px;
+                color: #8d8d8d;
+                padding: 0px;
+            }
+        }
+        .imClientChat-main-content {
+            position: absolute;
+            width: 100%;
+            height: calc(~'100% - 30px');
+            & > .inner {
+                padding-bottom: 20px;
+                .item {
+                    clear: both;
+                    overflow: hidden;
+                }
+                .sys {
+                    text-align: center;
+                    color: #1072B5;
+                    font-size: 12px;
+                    .text-content {
+                        padding-top: 20px;
+                    }
+                    .myd-content {
+                        .desc {
+                            margin-top: 18px;
+                        }
+                        .text {
+                            color: #3e3e3e;
+                            margin-top: 12px;
+                        }
+                        .remark {
+                            margin-top: 10px;
+                        }
+                    }
+                }
+                .receiver,
+                .sender {
+                    font-size: 12px;
+                    margin-top: 18px;
+                    .headericon-wrapper {
+                        float: left;
+                        margin: 10px 8px 0px;
+                        border-radius: 50%;
+                        background: #ffffff;
+                        .kf-img {
+                            width: 40px;
+                            height: 40px;
+                        }
+                    }
+                    .info-wrapper {
+                        text-align: left;
+                        font-size: 12px;
+                        position: relative;
+                        .item-content {
+                            position: relative;
+                            max-width: 330px;
+                            margin-top: 10px;
+                            color: #3e3e3e;
+                            font-size: 13px;
+                            line-height: 1.8;
+                            .text {
+                                white-space: normal;
+                                word-wrap: break-word;
+                                word-break: break-all;
+                                padding: 10px 12px;
+                            }
+                            .qqemoji {
+                                width: 24px;
+                                height: 24px;
+                            }
+                            .img {
+                                max-width: 320px;
+                                max-height: 240px;
+                                white-space: normal;
+                                word-wrap: break-word;
+                                word-break: break-all;
+                                padding: 5px;
+                                cursor: pointer;
+                            }
+                            .file {
+                                padding: 10px 8px;
+                                overflow: hidden;
+                                margin: 3px;
+                                background: #fff;
+                                border-radius: 5px;
+                                width: 220px;
+                                .el-button {
+                                    padding: 0px;
+                                    font-size: 12px;
+                                }
+                                .file-info {
+                                    padding: 0px 8px;
+                                    float: left;
+                                    .file-name {
+                                        width: 160px;
+                                        display: inline-block;
+                                        color: #333333;
+                                        white-space: nowrap;
+                                        text-overflow: ellipsis;
+                                        overflow: hidden;
+                                        line-height: 1.3;
+                                    }
+                                }
+                                .file-opr {
+                                    margin-top: 8px;
+                                }
+                                .file-icon {
+                                    font-size: 40px;
+                                    float: left;
+                                    color: #663399;
+                                }
+                                .file-download {
+                                    color: #00a8d7;
+                                    cursor: pointer;
+                                    text-decoration: blink;
+                                }
+                            }
+                            .preInput {
+                                position: relative;
+                                color: #8d8d8d;
+                                img {
+                                    height: 15px;
+                                    position: relative;
+                                    top: 3px;
+                                }
+                            }
+                            .issueList {
+                                width: 250px;
+                                padding: 10px;
+                                .title {
+                                    position: relative;
+                                    .content {
+                                        position: absolute;
+                                        margin-top: -1px;
+                                        margin-left: 6px;
+                                    }
+                                }
+                                .el-collapse-item__wrap {
+                                    background: transparent;
+                                }
+                                .el-collapse {
+                                    border: 0px;
+                                    margin-top: 8px;
+                                    margin-bottom: -8px;
+                                    .el-collapse-item__header {
+                                        font-size: 13px;
+                                        background: transparent;
+                                        color: #f7455d;
+                                        padding-left: 5px;
+                                    }
+                                    .el-collapse-item__wrap {
+                                        .el-collapse-item__content {
+                                            font-size: 12px;
+                                            color: #ffffff;
+                                            padding-left: 5px;
+                                        }
+                                    }
+                                }
+                            }
+                            .issueExtend {
+                                width: 250px;
+                                padding: 10px 10px 0px;
+                                .main {
+                                    border-top: 1px solid #eeeff0;
+                                    margin-top: 10px;
+                                    padding-top: 10px;
+                                    p {
+                                        margin-bottom: 5px;
+                                    }
+                                    .el-button {
+                                        font-size: 12px;
+                                        color: #f7455d;
+                                    }
+                                }
+                            }
+                            .issueResult {
+                                width: 250px;
+                                .main {
+                                    padding: 10px;
+                                }
+                                .footer {
+                                    border-top: 1px solid #eeeff0;
+                                    height: 30px;
+                                    .btn {
+                                        width: 60px;
+                                        margin: 0px 30px;
+                                        padding: 6px 0px;
+                                        display: inline-block;
+                                        text-align: center;
+                                        font-size: 10px;
+                                        color: #eadfdf;
+                                        cursor: pointer;
+                                        position: relative;
+                                        &:first-child::after {
+                                            top: 4px;
+                                            right: -30px;
+                                            width: 1px;
+                                            height: 80%;
+                                            content: '';
+                                            position: absolute;
+                                            background-color: #eeeff0;
+                                            z-index: 0;
+                                        }
+                                    }
+                                    .iconfont {
+                                        font-size: 10px;
+                                        margin-right: 5px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .item.receiver {
+                    margin-left: 5px;
+                    .headericon-wrapper {
+                        margin-right: 15px;
+                    }
+                    .info-wrapper {
+                        .item-content {
+                            background-color: #1072B5;
+                            border: 1px solid #1072B5;
+                            color: #ffffff;
+                            float: left;
+                            &::before {
+                                position: absolute;
+                                top: -1px;
+                                left: -10px;
+                                width: 0px;
+                                height: 0px;
+                                content: '';
+                                border-top: 0px;
+                                border-right: 10px solid #1072B5;
+                                border-bottom: 5px solid transparent;
+                                border-left: 0px;
+                            }
+                        }
+                    }
+                }
+                .item.sender {
+                    margin-right: 5px;
+                    .headericon-wrapper {
+                        float: right;
+                        margin-left: 15px;
+                    }
+                    .info-wrapper {
+                        float: right;
+                        .item-content {
+                            float: right;
+                            background: #eeeeee;
+                            border: 1px solid #eeeeee;
+                            color: #000000;
+                            &::before {
+                                position: absolute;
+                                top: -1px;
+                                right: -10px;
+                                width: 0px;
+                                height: 0px;
+                                content: '';
+                                border-top: 0px;
+                                border-right: 0px;
+                                border-bottom: 5px solid transparent;
+                                border-left: 10px solid #eeeeee;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    .imClientChat-footer {
+        position: relative;
+        width: 100%;
+        border-top: 1px solid #e6e6e6;
+        .opr-wrapper {
+            text-align: left;
+            height: 20px;
+            padding: 10px;
+            & > .icon-group {
+                width: 100%;
+                & > .item {
+                    margin-right: 12px;
+                    float: left;
+                    font-weight: normal;
+                    text-decoration: blink;
+                    & > .iconfont {
+                        color: #aaa;
+                        font-size: 20px;
+                    }
+                }
+                .pingjia {
+                    color: #333333;
+                    .el-icon-star-on {
+                        margin-right: 5px;
+                        color: #1072B5;
+                    }
+                }
+            }
+        }
+        .input-wrapper {
+            padding: 2px 0px 0px 10px;
+            position: relative;
+            .inputContent {
+                width: 99%;
+                height: 75px;
+                padding: 2px;
+                resize: none;
+                overflow: auto;
+                line-height: 1.5;
+                outline: 0px solid transparent;
+            }
+            .shortcutPopover-wrapper {
+                position: absolute;
+                top: 30px;
+                left: 10px;
+                width: 440px;
+                max-height: 80px;
+                overflow-y: auto;
+                border: 1px solid #9b9aab;
+                border-radius: 3px;
+                font-size: 12px;
+                background-color: #fff;
+                padding: 4px;
+                cursor: pointer;
+                p {
+                    padding: 4px;
+                    &.selected {
+                        background-color: #ded1cc;
+                    }
+                    .key {
+                        width: 50px;
+                        display: inline-block;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                    }
+                    .content {
+                        margin-left: 10px;
+                        width: 350px;
+                        display: inline-block;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                    }
+                    .highlight {
+                        color: #00a8d7;
+                    }
+                }
+            }
+            .tips {
+                position: absolute;
+                top: 7px;
+                left: 20px;
+                width: auto;
+                color: #8d8d8d;
+            }
+        }
+        .send-btn {
+            float: right;
+            margin-right: 16px;
+            &.off,
+            &.end {
+                background-color: #ccc;
+                border-color: #ccc;
+            }
+        }
+        .off-wrapper {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            .content {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+        }
+    }
+}
+
+// 信息区域
+.imClientInfo-wrapper {
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    .imClientInfo-item {
+        .imClientInfo-item-header {
+            font-weight: bolder;
+            font-size: 16px;
+            color: #1072B5;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ccc;
+        }
+    }
+    .imClientInfo-notice-wrapper {
+        .imClientInfo-notice-main {
+            padding: 10px 15px 0px;
+            & > .title {
+                font-size: 12px;
+                color: #000000;
+            }
+            & > .img {
+                width: 265px;
+                height: 120px;
+                margin-top: 10px;
+            }
+        }
+    }
+    .imClientInfo-faq-wrapper {
+        .imClientInfo-faq-main {
+            height: 260px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            .el-collapse {
+                border: 0px;
+                .el-collapse-item__header {
+                    position: relative;
+                    padding: 0px 15px;
+                    font-size: 12px;
+                    background: transparent;
+                    color: #000000;
+                    &.is-active {
+                        color: #f7455d;
+                    }
+                    .el-collapse-item__arrow {
+                        position: absolute;
+                        left: 267px;
+                    }
+                }
+                .el-collapse-item__wrap {
+                    background: transparent;
+                    .el-collapse-item__content {
+                        font-size: 12px;
+                        color: #959699;
+                        padding: 0px 15px 10px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 图片查看器
+.imgView-dialog {
+    background: #00000080;
+    height: 100%;
+    .el-dialog {
+        max-width: 75%;
+        position: relative;
+        background: transparent;
+        box-shadow: none;
+        .el-dialog__header {
+            display: none;
+        }
+        .el-dialog__body {
+            padding: 0px;
+            text-align: center;
+            position: relative;
+            .header {
+                text-align: right;
+                position: relative;
+                height: 0px;
+                .icon-IM-tupianguanbi {
+                    font-size: 42px;
+                    color: white;
+                    position: relative;
+                    right: -50px;
+                    top: -30px;
+                    cursor: pointer;
+                }
+            }
+            .main {
+                .img {
+                    max-width: 100%;
+                    max-height: 100%;
+                    height: 100%;
+                }
+            }
+        }
+    }
+}
+
+// 队列
+.im-queueDialog {
+    .el-dialog {
+        width: 375px;
+        background: #ffffff;
+        color: #000000;
+    }
+    .el-dialog__title {
+        font-size: 14px;
+        color: #000000;
+    }
+    .el-dialog__body {
+        padding: 0px;
+        .main {
+            height: 230px;
+            padding: 3px 17px 22px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-bottom: 1px solid #ebeff3;
+            .item {
+                float: left;
+                padding: 30px 21px 0px;
+                text-align: center;
+                .el-radio-button__inner {
+                    width: 121px;
+                    overflow: hidden;
+                    display: inline-block;
+                    font-size: 14px;
+                    color: #3e3e3e;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    border-radius: 5px;
+                }
+                .el-radio-button.is-active {
+                    .el-radio-button__inner {
+                        color: #00a8d7;
+                        background-color: #fff;
+                    }
+                }
+            }
+        }
+        .footer {
+            text-align: center;
+            padding: 14px 0px;
+        }
+    }
+}
+
+// 满意度
+.im-mydDialog {
+    overflow: hidden;
+    .el-dialog {
+        width: 400px;
+        height: 400px;
+        background: #ffffff;
+        color: #000000;
+    }
+    .el-dialog__body {
+        padding: 0px 20px;
+        .el-dialog__close {
+            color: #000000;
+        }
+        .main {
+            overflow: hidden;
+            .title {
+                text-align: center;
+                font-size: 14px;
+                color: #000000;
+                margin-top: 15px;
+            }
+            .rate-wrapper {
+                margin-top: 30px;
+                .rate-item {
+                    display: inline-block;
+                    width: 65px;
+                    height: 60px;
+                    text-align: center;
+                    cursor: pointer;
+                    &.active {
+                        border: 1px solid #1072B5;
+                        box-sizing: border-box;
+                    }
+                    p {
+                        position: relative;
+                        top: -5px;
+                        color: #000000;
+                        font-size: 12px;
+                    }
+                }
+            }
+            textarea {
+                width: 95%;
+                margin: 20px auto 0px;
+            }
+            .submit-btn {
+                width: 100px;
+                margin-top: 18px;
+            }
+        }
+    }
+    .submit-main {
+        .iconfont {
+            display: table;
+            margin: 85px auto 0px;
+            color: #6bcc00;
+            font-size: 50px;
+        }
+        .title {
+            margin-top: 30px;
+            font-size: 20px;
+            text-align: center;
+            color: #000000;
+        }
+        .sub-title {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #454545;
+            text-align: center;
+        }
+    }
+}
+
+// 留言
+.im-leaveDialog {
+    overflow: hidden;
+    .el-dialog {
+        width: 360px;
+        height: 400px;
+        background: #ffffff;
+        color: #000000;
+    }
+    .el-dialog__body {
+        padding: 0px 50px;
+        .el-dialog__close {
+            color: #000000;
+        }
+        .leaveMsg-main {
+            overflow: hidden;
+            .title {
+                margin-top: 15px;
+                margin-bottom: 10px;
+                text-align: center;
+                font-size: 14px;
+                color: #000000;
+            }
+            .leaveMsg-main-form {
+                margin-bottom: 10px;
+                .submit-btn {
+                    width: 100px;
+                    margin-bottom: 15px;
+                }
+            }
+        }
+        .leaveMsg-submit-main {
+            color: #000000;
+            .iconfont {
+                color: #6bcc00;
+                font-size: 50px;
+                margin: 85px auto 0px;
+                display: table;
+            }
+            .title {
+                font-size: 18px;
+                text-align: center;
+                margin-top: 30px;
+            }
+            .sub-title {
+                font-size: 14px;
+                text-align: center;
+                margin-top: 15px;
+            }
+        }
+    }
+}
+
+// 登出
+.im-logoutDialog {
+    overflow: hidden;
+    .el-dialog {
+        width: 375px;
+        height: 300px;
+        background: #ffffff;
+        color: #000000;
+    }
+    .el-dialog__title {
+        font-size: 14px;
+        color: #000000;
+    }
+    .title {
+        font-size: 14px;
+        color: #000000;
+        margin: 40px 75px 0px;
+    }
+    .footer {
+        padding: 35px 0px 25px;
+        text-align: center;
+        .el-button {
+            width: 90px;
+            height: 40px;
+            font-size: 12px;
+            padding: 0px;
+        }
+    }
+}
+
+// qq表情
+.qqEmoji-wrapper {
+    .iconfont {
+        color: #aaa;
+        font-size: 20px;
+    }
+    .list-wrapper {
+        height: 220px;
+        width: 442px;
+        background-color: #fff;
+        border: 1px solid #c5c5c5;
+        padding: 10px;
+        position: absolute;
+        top: -227px;
+        left: 1px;
+        .list-inner {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            .qqEmoji {
+                float: left;
+                border-bottom: 1px solid #f0f0f0;
+                border-right: 1px solid #f0f0f0;
+                cursor: pointer;
+            }
+        }
+    }
+}
+
+.qqEmoji-wrapper-global {
+    .qqEmoji {
+        width: 28px;
+        height: 28px;
+        font-size: 0;
+        text-indent: -999em;
+        background: url('../image/qqEmoji.png') 0 0 no-repeat;
+    }
+    .qqEmoji.small {
+        vertical-align: middle;
+        height: 24px !important;
+        width: 24px;
+        transform: scale(0.82);
+        margin-top: -5px;
+        margin-left: -3px;
+    }
+    .qqEmoji.qqEmoji0 {
+        background-position: 0 0;
+    }
+    .qqEmoji.qqEmoji1 {
+        background-position: -29px 0;
+    }
+    .qqEmoji.qqEmoji2 {
+        background-position: -58px 0;
+    }
+    .qqEmoji.qqEmoji3 {
+        background-position: -87px 0;
+    }
+    .qqEmoji.qqEmoji4 {
+        background-position: -116px 0;
+    }
+    .qqEmoji.qqEmoji5 {
+        background-position: -145px 0;
+    }
+    .qqEmoji.qqEmoji6 {
+        background-position: -174px 0;
+    }
+    .qqEmoji.qqEmoji7 {
+        background-position: -203px 0;
+    }
+    .qqEmoji.qqEmoji8 {
+        background-position: -232px 0;
+    }
+    .qqEmoji.qqEmoji9 {
+        background-position: -261px 0;
+    }
+    .qqEmoji.qqEmoji10 {
+        background-position: -290px 0;
+    }
+    .qqEmoji.qqEmoji11 {
+        background-position: -319px 0;
+    }
+    .qqEmoji.qqEmoji12 {
+        background-position: -348px 0;
+    }
+    .qqEmoji.qqEmoji13 {
+        background-position: -377px 0;
+    }
+    .qqEmoji.qqEmoji14 {
+        background-position: -406px 0;
+    }
+    .qqEmoji.qqEmoji15 {
+        background-position: 0 -29px;
+    }
+    .qqEmoji.qqEmoji16 {
+        background-position: -29px -29px;
+    }
+    .qqEmoji.qqEmoji17 {
+        background-position: -58px -29px;
+    }
+    .qqEmoji.qqEmoji18 {
+        background-position: -87px -29px;
+    }
+    .qqEmoji.qqEmoji19 {
+        background-position: -116px -29px;
+    }
+    .qqEmoji.qqEmoji20 {
+        background-position: -145px -29px;
+    }
+    .qqEmoji.qqEmoji21 {
+        background-position: -174px -29px;
+    }
+    .qqEmoji.qqEmoji22 {
+        background-position: -203px -29px;
+    }
+    .qqEmoji.qqEmoji23 {
+        background-position: -232px -29px;
+    }
+    .qqEmoji.qqEmoji24 {
+        background-position: -261px -29px;
+    }
+    .qqEmoji.qqEmoji25 {
+        background-position: -290px -29px;
+    }
+    .qqEmoji.qqEmoji26 {
+        background-position: -319px -29px;
+    }
+    .qqEmoji.qqEmoji27 {
+        background-position: -348px -29px;
+    }
+    .qqEmoji.qqEmoji28 {
+        background-position: -377px -29px;
+    }
+    .qqEmoji.qqEmoji29 {
+        background-position: -406px -29px;
+    }
+    .qqEmoji.qqEmoji30 {
+        background-position: 0 -58px;
+    }
+    .qqEmoji.qqEmoji31 {
+        background-position: -29px -58px;
+    }
+    .qqEmoji.qqEmoji32 {
+        background-position: -58px -58px;
+    }
+    .qqEmoji.qqEmoji33 {
+        background-position: -87px -58px;
+    }
+    .qqEmoji.qqEmoji34 {
+        background-position: -116px -58px;
+    }
+    .qqEmoji.qqEmoji35 {
+        background-position: -145px -58px;
+    }
+    .qqEmoji.qqEmoji36 {
+        background-position: -174px -58px;
+    }
+    .qqEmoji.qqEmoji37 {
+        background-position: -203px -58px;
+    }
+    .qqEmoji.qqEmoji38 {
+        background-position: -232px -58px;
+    }
+    .qqEmoji.qqEmoji39 {
+        background-position: -261px -58px;
+    }
+    .qqEmoji.qqEmoji40 {
+        background-position: -290px -58px;
+    }
+    .qqEmoji.qqEmoji41 {
+        background-position: -319px -58px;
+    }
+    .qqEmoji.qqEmoji42 {
+        background-position: -348px -58px;
+    }
+    .qqEmoji.qqEmoji43 {
+        background-position: -377px -58px;
+    }
+    .qqEmoji.qqEmoji44 {
+        background-position: -406px -58px;
+    }
+    .qqEmoji.qqEmoji45 {
+        background-position: 0 -87px;
+    }
+    .qqEmoji.qqEmoji46 {
+        background-position: -29px -87px;
+    }
+    .qqEmoji.qqEmoji47 {
+        background-position: -58px -87px;
+    }
+    .qqEmoji.qqEmoji48 {
+        background-position: -87px -87px;
+    }
+    .qqEmoji.qqEmoji49 {
+        background-position: -116px -87px;
+    }
+    .qqEmoji.qqEmoji50 {
+        background-position: -145px -87px;
+    }
+    .qqEmoji.qqEmoji51 {
+        background-position: -174px -87px;
+    }
+    .qqEmoji.qqEmoji52 {
+        background-position: -203px -87px;
+    }
+    .qqEmoji.qqEmoji53 {
+        background-position: -232px -87px;
+    }
+    .qqEmoji.qqEmoji54 {
+        background-position: -261px -87px;
+    }
+    .qqEmoji.qqEmoji55 {
+        background-position: -290px -87px;
+    }
+    .qqEmoji.qqEmoji56 {
+        background-position: -319px -87px;
+    }
+    .qqEmoji.qqEmoji57 {
+        background-position: -348px -87px;
+    }
+    .qqEmoji.qqEmoji58 {
+        background-position: -377px -87px;
+    }
+    .qqEmoji.qqEmoji59 {
+        background-position: -406px -87px;
+    }
+    .qqEmoji.qqEmoji60 {
+        background-position: 0 -116px;
+    }
+    .qqEmoji.qqEmoji61 {
+        background-position: -29px -116px;
+    }
+    .qqEmoji.qqEmoji62 {
+        background-position: -58px -116px;
+    }
+    .qqEmoji.qqEmoji63 {
+        background-position: -87px -116px;
+    }
+    .qqEmoji.qqEmoji64 {
+        background-position: -116px -116px;
+    }
+    .qqEmoji.qqEmoji65 {
+        background-position: -145px -116px;
+    }
+    .qqEmoji.qqEmoji66 {
+        background-position: -174px -116px;
+    }
+    .qqEmoji.qqEmoji67 {
+        background-position: -203px -116px;
+    }
+    .qqEmoji.qqEmoji68 {
+        background-position: -232px -116px;
+    }
+    .qqEmoji.qqEmoji69 {
+        background-position: -261px -116px;
+    }
+    .qqEmoji.qqEmoji70 {
+        background-position: -290px -116px;
+    }
+    .qqEmoji.qqEmoji71 {
+        background-position: -319px -116px;
+    }
+    .qqEmoji.qqEmoji72 {
+        background-position: -348px -116px;
+    }
+    .qqEmoji.qqEmoji73 {
+        background-position: -377px -116px;
+    }
+    .qqEmoji.qqEmoji74 {
+        background-position: -406px -116px;
+    }
+    .qqEmoji.qqEmoji75 {
+        background-position: 0 -145px;
+    }
+    .qqEmoji.qqEmoji76 {
+        background-position: -29px -145px;
+    }
+    .qqEmoji.qqEmoji77 {
+        background-position: -58px -145px;
+    }
+    .qqEmoji.qqEmoji78 {
+        background-position: -87px -145px;
+    }
+    .qqEmoji.qqEmoji79 {
+        background-position: -116px -145px;
+    }
+    .qqEmoji.qqEmoji80 {
+        background-position: -145px -145px;
+    }
+    .qqEmoji.qqEmoji81 {
+        background-position: -174px -145px;
+    }
+    .qqEmoji.qqEmoji82 {
+        background-position: -203px -145px;
+    }
+    .qqEmoji.qqEmoji83 {
+        background-position: -232px -145px;
+    }
+    .qqEmoji.qqEmoji84 {
+        background-position: -261px -145px;
+    }
+    .qqEmoji.qqEmoji85 {
+        background-position: -290px -145px;
+    }
+    .qqEmoji.qqEmoji86 {
+        background-position: -319px -145px;
+    }
+    .qqEmoji.qqEmoji87 {
+        background-position: -348px -145px;
+    }
+    .qqEmoji.qqEmoji88 {
+        background-position: -377px -145px;
+    }
+    .qqEmoji.qqEmoji89 {
+        background-position: -406px -145px;
+    }
+    .qqEmoji.qqEmoji90 {
+        background-position: 0 -174px;
+    }
+    .qqEmoji.qqEmoji91 {
+        background-position: -29px -174px;
+    }
+    .qqEmoji.qqEmoji92 {
+        background-position: -58px -174px;
+    }
+    .qqEmoji.qqEmoji93 {
+        background-position: -87px -174px;
+    }
+    .qqEmoji.qqEmoji94 {
+        background-position: -116px -174px;
+    }
+    .qqEmoji.qqEmoji95 {
+        background-position: -145px -174px;
+    }
+    .qqEmoji.qqEmoji96 {
+        background-position: -174px -174px;
+    }
+    .qqEmoji.qqEmoji97 {
+        background-position: -203px -174px;
+    }
+    .qqEmoji.qqEmoji98 {
+        background-position: -232px -174px;
+    }
+    .qqEmoji.qqEmoji99 {
+        background-position: -261px -174px;
+    }
+    .qqEmoji.qqEmoji100 {
+        background-position: -290px -174px;
+    }
+    .qqEmoji.qqEmoji101 {
+        background-position: -319px -174px;
+    }
+    .qqEmoji.qqEmoji102 {
+        background-position: -348px -174px;
+    }
+    .qqEmoji.qqEmoji103 {
+        background-position: -377px -174px;
+    }
+    .qqEmoji.qqEmoji104 {
+        background-position: -406px -174px;
+    }
+}

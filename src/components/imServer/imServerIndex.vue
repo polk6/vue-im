@@ -1,10 +1,10 @@
 <!-- im服务端入口 -->
 <template>
     <div class="imServerIndex-wrapper">
-        <div class="imServerIndex-main">
+        <main class="imServerIndex-main">
             <im-record class="item im-record" @selectedChat="selectedChat()"></im-record>
-            <im-chat v-if="storeSelectedChatEn!=null" ref="im_chat" class="item im-chat" :socket="socket"></im-chat>
-        </div>
+            <im-chat v-if="storeSelectedChatEn!=null" ref="im_chat" class="item im-chat"></im-chat>
+        </main>
     </div>
 </template>
 

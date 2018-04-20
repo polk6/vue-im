@@ -2,33 +2,62 @@
 <template>
     <div class="imClientIndex-wrapper">
         <header class="imClientIndex-header">
-            
+            <div class="name-wrapper position-v-mid">
+                <span v-if="chatInfoEn.chatState == 'robot'">您与机器人{{robotEn.robotName}}的对话</span>
+                <span v-else-if="chatInfoEn.chatState == 'agent'">您与客服{{serverChatEn.serverChatName}}的对话</span>
+            </div>
+            <div class="position-h-v-mid">
+                {{projectEn.projectName}}
+            </div>
+            <div class="close-wrapper position-v-mid">
+                <i class="el-icon-close" @click="closeChat()"></i>
+            </div>
         </header>
-        <main class="imClientIndex-main">
-            <common-chat ref="common_chat" :chatEn="clientChatEn" :oprRoleName="'client'" @sendMsg="sendMsg"></common-chat>
+        <main class="imServerIndex-main">
+            <client-chat class="item client-chat" ref="client_chat" :chatInfoEn="chatInfoEn" :oprRoleName="'client'" @sendMsg="sendMsg"></client-chat>
+            <client-notice class="item client-notice"></client-notice>
         </main>
     </div>
 </template>
 
 <script >
-import commonChat from '@/components/common/common_chat.vue';
+import clientChat from './imClientChat';
+import clientNotice from './imClientNotice';
 
 export default {
     components: {
-        commonChat: commonChat
+        clientChat: clientChat,
+        clientNotice: clientNotice
     },
     data() {
         return {
             socket: null,
-            clientChatEn: {
-                clientChatId: '',
-                clientChatName: '',
+            chatInfoEn: {
+                chatState: 'robot', // chat状态；robot 机器人、agent 客服、agentOff 离线、agentTransiting 客服转接中
+                connectionState: 'on', // 连接状态;on ：在线；off：离线
+                lastMsgTime: null, // 上一次消息的创建时间
+                playSound: true,
                 inputContent: '',
                 msgList: [],
                 state: 'on',
                 lastMsgShowTime: null // 最后一个消息的显示时间
+            }, // 会话信息，包括聊天记录、状态
+            clientChatEn: {
+                clientChatId: '',
+                clientChatName: '',
+                avatarUrl: '/static/image/im_client_avatar.png'
             }, // 当前账号的信息
-            serverChatEn: {} // 服务端chat信息
+            serverChatEn: {
+                serverChatName: '专员001',
+                avatarUrl: '/static/image/im_server_avatar.png'
+            }, // 服务端chat信息
+            robotEn: {
+                robotName: '小旺',
+                avatarUrl: '/static/image/im_server_avatar.png'
+            }, // 机器人信息
+            projectEn: {
+                projectName: '吉利在线客服'
+            }, // 项目信息
         };
     },
     computed: {},
@@ -38,6 +67,7 @@ export default {
          * 注册账号信息
          */
         regclientChatEn: function() {
+            // 1.注册用户信息
             this.$data.clientChatEn.clientChatId = Number.parseInt(Date.now() + Math.random());
             // 名称格式：姓+6位数字
             var userName = '';
@@ -61,6 +91,9 @@ export default {
             var tmpId = this.$data.clientChatEn.clientChatId.toString();
             userName += tmpId.substr(tmpId.length - 6, 6);
             this.$data.clientChatEn.clientChatName = userName;
+
+            // 2.注册socket
+            this.regSocket();
         },
 
         /**
@@ -92,8 +125,13 @@ export default {
 
                 //  接受服务端信息
                 self.$data.socket.on('serverSendMsg', function(data) {
+                    if (self.$data.chatState == 'robot') {
+                        data.msg.avatarUrl = self.$data.robotEn.avatarUrl;
+                    } else if (self.$data.chatState == 'agent') {
+                        data.msg.avatarUrl = self.$data.serverChatEn.avatarUrl;
+                    }
                     self.addChatMsg(data.msg, () => {
-                        self.$refs.common_chat.goEnd();
+                        self.$refs.client_chat.goEnd();
                     });
                 });
             });
@@ -111,7 +149,7 @@ export default {
             // 1.设定默认值
             msg.createTime = msg.createTime == undefined ? new Date() : msg.createTime;
 
-            var msgList = this.$data.clientChatEn.msgList ? this.$data.clientChatEn.msgList : [];
+            var msgList = this.$data.chatInfoEn.msgList ? this.$data.chatInfoEn.msgList : [];
 
             // 2.插入消息
             // 1)插入日期
@@ -119,22 +157,22 @@ export default {
             // 此处进行手动设置，5分钟之内的消息，只显示一次消息
             msg.createTime = new Date(msg.createTime);
             if (
-                this.$data.clientChatEn.lastMsgShowTime == null ||
-                msg.createTime.getTime() - this.$data.clientChatEn.lastMsgShowTime.getTime() > 1000 * 60 * 5
+                this.$data.chatInfoEn.lastMsgShowTime == null ||
+                msg.createTime.getTime() - this.$data.chatInfoEn.lastMsgShowTime.getTime() > 1000 * 60 * 5
             ) {
                 msgList.push({
                     role: 'sys',
                     contentType: 'text',
-                    content: this.$ak.Utils.getDateTimeStr(msg.createTime, 'H:i')
+                    content: this.$ak.Utils.getDateTimeStr(msg.createTime, 'Y-m-d H:i:s')
                 });
-                this.$data.clientChatEn.lastMsgShowTime = msg.createTime;
+                this.$data.chatInfoEn.lastMsgShowTime = msg.createTime;
             }
 
             // 2)插入消息
             msgList.push(msg);
 
             // 3.设置chat对象相关属性
-            this.$data.clientChatEn.msgList = msgList;
+            this.$data.chatInfoEn.msgList = msgList;
 
             // 4.回调
             successCallback && successCallback();
@@ -148,6 +186,7 @@ export default {
             var self = this;
             var msg = rs.msg;
             msg.role = 'client';
+            msg.avatarUrl = this.$data.clientChatEn.avatarUrl;
             // 1.socket发送消息
             this.$data.socket.emit('clientSendMsg', {
                 serverChatId: self.$data.serverChatEn.serverChatId,
@@ -156,13 +195,19 @@ export default {
             });
             // 2.添加到消息集合李
             this.addChatMsg(msg, () => {
-                this.$refs.common_chat.goEnd();
+                this.$refs.client_chat.goEnd();
             });
+        },
+
+        /**
+         * 关闭会话
+         */
+        closeChat: function() {
+            console.log(1);
         }
     },
     mounted() {
         this.regclientChatEn();
-        this.regSocket();
     }
 };
 </script>
@@ -175,30 +220,46 @@ export default {
 }
 
 .imClientIndex-wrapper {
-    margin: 10px;
-    width: 500px;
+    width: 850px;
     height: 550px;
-    border: 1px solid #cccccc;
+    margin: 10px;
     overflow: hidden;
-    .imClientIndex-header{
+    .imClientIndex-header {
+        position: relative;
         height: 35px;
         box-sizing: border-box;
         background: #000000;
+        font-size: 13px;
+        color: #ffffff;
+        .name-wrapper {
+            margin-left: 20px;
+        }
+        .close-wrapper {
+            right: 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
     }
-    .imClientIndex-main {
-        height: 100%;
+    .imServerIndex-main {
         max-width: 100%;
+        height: 100%;
         position: relative;
         & > .item {
             float: left;
-            border-right: 1px solid #e6e6e6;
             height: 100%;
+            border: 1px solid #e6e6e6;
+            border-top-width: 0px;
+            border-right-width: 0px;
+            box-sizing: border-box;
+            &:last-child {
+                border-right-width: 1px;
+            }
         }
-        & > .im-record {
-            width: 280px;
+        & > .client-chat {
+            width: calc(~'100% - 250px');
         }
-        & > .im-chat {
-            width: calc(~'99% - 280px');
+        & > .client-notice {
+            width: 250px;
         }
     }
 }

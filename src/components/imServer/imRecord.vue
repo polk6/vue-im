@@ -148,7 +148,7 @@ export default {
                 .followicon-wrapper {
                     position: relative;
                     float: left;
-                    width: 30px;
+                    width: 25px;
                     height: 100%;
                     .iconfont {
                         display: none;
@@ -189,7 +189,7 @@ export default {
                 }
                 .info-wrapper {
                     float: left;
-                    width: 190px;
+                    width: 185px;
                     position: relative;
                     padding-left: 5px;
                     padding-top: 5px;
