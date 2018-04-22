@@ -241,13 +241,12 @@ body .el-form .el-form-item__content .el-input .el-input__inner {
 .imClientChat-wrapper .imClientChat-main .imClientChat-main-content > .inner .sender .headericon-wrapper {
   float: left;
   margin: 10px 8px 0px;
-  border-radius: 50%;
-  background: #ffffff;
 }
 .imClientChat-wrapper .imClientChat-main .imClientChat-main-content > .inner .receiver .headericon-wrapper .kf-img,
 .imClientChat-wrapper .imClientChat-main .imClientChat-main-content > .inner .sender .headericon-wrapper .kf-img {
   width: 40px;
   height: 40px;
+  border-radius: 50%;
 }
 .imClientChat-wrapper .imClientChat-main .imClientChat-main-content > .inner .receiver .info-wrapper,
 .imClientChat-wrapper .imClientChat-main .imClientChat-main-content > .inner .sender .info-wrapper {

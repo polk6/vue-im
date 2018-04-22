@@ -75,7 +75,7 @@
                                             <!-- 4)机器人：常见问题 -->
                                             <div v-else-if="item.contentType=='issueList'" :class="item.state" class="item-content">
                                                 <div class="issueList">
-                                                    <div class="title"><img class="icon" src="../image/im_question.png"><span class="content">常见问题</span></div>
+                                                    <div class="title"><span class="content">常见问题</span></div>
                                                     <el-collapse :value="[0]" accordion>
                                                         <el-collapse-item v-for="(issueItem, index) in item.issueList" :name="index" :title="index+1+'.'+issueItem.title">
                                                             <div v-html="issueItem.content"></div>
@@ -142,7 +142,7 @@
                             </div>
                             <!-- 聊天输入框 -->
                             <div class="input-wrapper">
-                                <div maxlength="500" class="inputContent qqEmoji-wrapper-global" id="imClientChat_input" contenteditable="true" @paste.stop="inputContent_paste" @keydown="inputContent_keydown" @mouseup="inputContent_mouseup" @mouseleave="inputContent_mouseup"></div>
+                                <div maxlength="500" class="inputContent qqEmoji-wrapper-global" id="imClientChat_input" contenteditable="true" @paste.stop="inputContent_paste" @drop="inputContent_drop" @keydown="inputContent_keydown" @mouseup="inputContent_mouseup" @mouseleave="inputContent_mouseup"></div>
                             </div>
                             <!-- 发送按钮 -->
                             <el-button type="danger" class="send-btn" @click="sendText()" :disabled="chatInfoEn.inputContent.length==0">发送</el-button>

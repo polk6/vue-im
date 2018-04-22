@@ -737,6 +737,15 @@ var imVm = new Vue({
         },
 
         /**
+         * 输入框的拖拽
+         */
+        inputContent_drop: function(e) {
+            setTimeout(() => {
+                this.setInputContentByDiv();
+            }, 100);
+        },
+
+        /**
          * 发送文本
          */
         sendText: function() {
