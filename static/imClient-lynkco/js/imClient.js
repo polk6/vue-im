@@ -4,29 +4,7 @@ Utils.getDateTimeStr = function(sValue, dateFormat) {
         dateFormat = 'Y-m-d'; // 默认显示年月日
     }
 
-    var dt;
-    // 1.先解析传入的时间对象，
-    if (sValue) {
-        if (toString.call(sValue) !== '[object Date]') {
-            // 不为Date格式，就转换为DateTime类型
-            sValue = sValue + '';
-            if (sValue.indexOf('T') > 0) {
-                // 1)格式：2015-02-24T00:00:00
-                var timestr = sValue.replace('T', ' ').replace(/-/g, '/'); //=> 2015/02/24 00:00:00
-                dt = new Date(timestr);
-            } else if (sValue.indexOf('Date') >= 0) {
-                // 2).Net格式：/Date(1410744626000)/
-                //Convert date type that .NET can bind to DateTime
-                //var date = new Date(parseInt(sValue.substr(6)));
-                var timestr = sValue.toString().replace(/\/Date\((\d+)\)\//gi, '$1'); //
-                dt = new Date(Math.abs(timestr));
-            } else {
-                dt = new Date(sValue);
-            }
-        } else {
-            dt = sValue;
-        }
-    }
+    var dt = sValue;
 
     // 2.转换
     // 1)转换成对象 'Y-m-d H:i:s'
@@ -240,7 +218,7 @@ Vue.component('qq-emoji', {
          * @param {String} faceName face名称
          */
         getImgByFaceName: function(faceName) {
-            var imgStr = '<img class="qqEmoji small qqEmoji@faceIndex" text="@faceName" src="image/qqEmoji_spacer.gif"/>';
+            var imgStr = '<img class="qqEmoji small qqEmoji@faceIndex" src="image/qqEmoji_spacer.gif" text="@faceName"/>';
             var faceIndex = 0;
             for (var i = 0; i < this.$data.qqEmojiList.length; i++) {
                 if (this.$data.qqEmojiList[i] == faceName) {
@@ -367,7 +345,7 @@ var imVm = new Vue({
          */
         regclientChatEn: function() {
             // 1.注册用户信息
-            this.$data.clientChatEn.clientChatId = Number.parseInt(Date.now() + Math.random());
+            this.$data.clientChatEn.clientChatId = Date.now() + Math.random();
             // 名称格式：姓+6位数字
             var userName = '';
             switch (this.$data.clientChatEn.clientChatId % 5) {
@@ -478,7 +456,7 @@ var imVm = new Vue({
                     } else if (self.$data.chatInfoEn.chatState == 'agent') {
                         data.msg.avatarUrl = self.$data.serverChatEn.avatarUrl;
                     }
-                    self.addChatMsg(data.msg, () => {
+                    self.addChatMsg(data.msg, function() {
                         self.goEnd();
                     });
                 });
@@ -541,8 +519,9 @@ var imVm = new Vue({
                 });
             }
             // 2.添加到消息集合李
-            this.addChatMsg(msg, () => {
-                this.goEnd();
+            var self = this;
+            this.addChatMsg(msg, function() {
+                self.goEnd();
             });
         },
 
@@ -556,7 +535,7 @@ var imVm = new Vue({
             var htmlStr = document.getElementById('imClientChat_input').innerHTML;
 
             // 1.转换表情为纯文本：<img textanme="[笑]"/> => [笑]
-            var tmpInputContent = htmlStr.replace(/<img.+?text=\"(.+?)\".+?>/g, '[$1]').replace(/<.+?>/g, '');
+            var tmpInputContent = htmlStr.replace(/<img.+?text=\"(.+?)\".?>/g, '[$1]').replace(/<.+?>/g, '');
 
             // 2.设置最长长度
             if (tmpInputContent.length > 500) {
@@ -697,14 +676,14 @@ var imVm = new Vue({
                     if (item.kind == 'file' && item.type.indexOf('image') >= 0) {
                         // 粘贴板为图片类型
                         var file = item.getAsFile();
-                        let formData = new FormData();
+                        var formData = new FormData();
                         formData.append('uploadFile', file);
                         this.$http.uploadFile({
                             url: '/upload',
                             params: formData,
-                            successCallback: (rs) => {
+                            successCallback: function(rs) {
                                 document.getElementById('imClientChat_opr_fileUpload').value = '';
-                                this.sendMsg({
+                                self.sendMsg({
                                     contentType: 'image',
                                     fileName: rs.fileName,
                                     fileUrl: rs.fileUrl,
@@ -740,8 +719,9 @@ var imVm = new Vue({
          * 输入框的拖拽
          */
         inputContent_drop: function(e) {
-            setTimeout(() => {
-                this.setInputContentByDiv();
+            var self = this;
+            setTimeout(function() {
+                self.setInputContentByDiv();
             }, 100);
         },
 
@@ -778,31 +758,7 @@ var imVm = new Vue({
             var fileNameIndex = document.getElementById('imClientChat_opr_fileUpload').value.lastIndexOf('\\') + 1;
             var fileName = document.getElementById('imClientChat_opr_fileUpload').value.substr(fileNameIndex);
             var extend = fileName.substring(fileName.lastIndexOf('.') + 1);
-            // 1.判断有效
-            // 1)大小
-            if (document.getElementById('imClientChat_opr_fileUpload').files[0].size >= 1000 * 1000 * 10) {
-                this.$ak.Msg.toast('文件大小不能超过10M', 'error');
-                document.getElementById('imClientChat_opr_fileUpload').value = '';
-                return false;
-            }
-
             // 2.文件上传
-            let formData = new FormData();
-            formData.append('uploadFile', document.getElementById('imClientChat_opr_fileUpload').files[0]);
-            this.$http.uploadFile({
-                url: '/upload',
-                params: formData,
-                successCallback: (rs) => {
-                    console.log(rs);
-                    document.getElementById('imClientChat_opr_fileUpload').value = '';
-                    this.sendMsg({
-                        contentType: ['png', 'jpg', 'jpeg', 'gif', 'bmp'].indexOf(extend) >= 0 ? 'image' : 'file',
-                        fileName: fileName,
-                        fileUrl: rs.fileUrl,
-                        state: 'success'
-                    });
-                }
-            });
         },
 
         /**
@@ -897,7 +853,6 @@ var imVm = new Vue({
          */
         mydDialog_setMyd: function(value) {
             this.$data.im_mydDialog_form.selectedItem = value;
-            console.log(value);
         },
 
         /**
@@ -1042,9 +997,10 @@ var imVm = new Vue({
          * 聊天记录滚动到底部
          */
         goEnd: function() {
-            this.$nextTick(() => {
-                setTimeout(() => {
-                    this.$refs.imClientChat_main.scrollTop = this.$refs.imClientChat_main.scrollHeight;
+            var self = this;
+            this.$nextTick(function() {
+                setTimeout(function() {
+                    self.$refs.imClientChat_main.scrollTop = self.$refs.imClientChat_main.scrollHeight;
                 }, 100);
             });
         }
