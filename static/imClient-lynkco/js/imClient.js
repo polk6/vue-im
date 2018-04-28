@@ -830,6 +830,10 @@ var imVm = new Vue({
          * 队列dialog_提交
          */
         queueDialog_submit: function() {
+            if (this.$data.im_queueDialog_selectedItem.length == 0) {
+                this.$message.error('请选择咨询内容');
+                return;
+            }
             this.$data.im_queueDialogVisible = false;
             this.$data.chatInfoEn.chatState = 'agent';
             this.regSocket();
@@ -859,6 +863,10 @@ var imVm = new Vue({
          * 满意度dialog_提交
          */
         mydDialog_submit: function() {
+            if (this.$data.im_mydDialog_form.selectedItem == '') {
+                this.$message.error('请进行评分');
+                return;
+            }
             this.$data.im_mydDialogSubmitOk = true;
             var score = this.$data.im_mydDialog_form.selectedItem.toString();
             score = 6 - score; // 后台数据库 1表示非常满意

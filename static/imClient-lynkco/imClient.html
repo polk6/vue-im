@@ -199,7 +199,15 @@
                 </el-radio-group>
             </div>
             <div class="footer">
-                <el-button type="primary" :disabled="im_queueDialog_selectedItem.length==0" @click="queueDialog_submit">开始咨询</el-button>
+                <div class="svg-btn-box" @click="queueDialog_submit">
+                    <div class="svg-btn">
+                        <span>开始咨询</span>
+                        <span>开始咨询</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%">
+                        <path d="M0,0 L124,0 124,40 0,40 Z"></path>
+                    </svg>
+                </div>
             </div>
         </el-dialog>
         <!-- 满意度dialog-->
@@ -233,7 +241,15 @@
                 <el-row>
                     <el-input type="textarea" :maxlength="50" :rows="4" resize="none" placeholder="备注(选填，50字符以内)" v-model="im_mydDialog_form.remark"></el-input>
                 </el-row>
-                <el-button type="primary" class="submit-btn position-h-mid" @click="mydDialog_submit" :disabled="im_mydDialog_form.selectedItem==''">确定</el-button>
+                <div class="svg-btn-box position-h-mid" @click="mydDialog_submit" style="margin-top: 30px;">
+                    <div class="svg-btn">
+                        <span>确定</span>
+                        <span>确定</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%">
+                        <path d="M0,0 L124,0 124,40 0,40 Z"></path>
+                    </svg>
+                </div>
             </div>
             <div v-show="im_mydDialogSubmitOk" class="submit-main">
                 <i class="iconfont icon-tijiaochenggong"></i>
@@ -258,7 +274,15 @@
                         <el-input type="textarea" v-model="im_leaveMsgDialog_form.content" :rows="5" placeholder="请输入2-100字符"></el-input>
                     </el-form-item>
                     <el-form-item class="text-center">
-                        <el-button type="primary" class="submit-btn" @click="leaveMsgDialog_submit" :disabled="im_leaveMsgDialog_form.phone.length==0 || im_leaveMsgDialog_form.email.length==0">提 交</el-button>
+                        <div class="svg-btn-box" @click="leaveMsgDialog_submit">
+                            <div class="svg-btn">
+                                <span>提 交</span>
+                                <span>提 交</span>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%">
+                                <path d="M0,0 L124,0 124,40 0,40 Z"></path>
+                            </svg>
+                        </div>
                     </el-form-item>
                 </el-form>
             </div>
@@ -273,8 +297,24 @@
         <el-dialog class="im-logoutDialog" :visible.sync="im_logoutVisible" :close-on-click-modal="false" :close-on-press-escape="false">
             <p class="title">结束本次会话？</p>
             <div class="footer">
-                <el-button type="primary" @click="logoutDialog_cancel">取消</el-button>
-                <el-button type="primary" @click="logoutDialog_submit">结束会话</el-button>
+                <div class="svg-btn-box" @click="logoutDialog_cancel">
+                    <div class="svg-btn">
+                        <span>取消</span>
+                        <span>取消</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%">
+                        <path d="M0,0 L124,0 124,40 0,40 Z"></path>
+                    </svg>
+                </div>
+                <div class="svg-btn-box" @click="logoutDialog_submit">
+                    <div class="svg-btn">
+                        <span>结束会话</span>
+                        <span>结束会话</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%">
+                        <path d="M0,0 L124,0 124,40 0,40 Z"></path>
+                    </svg>
+                </div>
             </div>
         </el-dialog>
     </div>
