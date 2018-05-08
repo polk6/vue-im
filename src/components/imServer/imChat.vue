@@ -12,7 +12,7 @@
         </header>
         <main class="imChat-main">
             <!-- 聊天框区域 -->
-            <common-chat ref="common_chat" :chatEn="storeSelectedChatEn" :oprRoleName="'server'" @sendMsg="sendMsg"></common-chat>
+            <common-chat ref="common_chat" :chatInfoEn="storeSelectedChatEn" :oprRoleName="'server'" @sendMsg="sendMsg"></common-chat>
         </main>
     </div>
 </template>

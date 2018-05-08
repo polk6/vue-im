@@ -79,7 +79,13 @@ module.exports = new Promise((resolve, reject) => {
             devWebpackConfig.plugins.push(
                 new FriendlyErrorsPlugin({
                     compilationSuccessInfo: {
-                        messages: [`Your application is running here:  http://localhost:${port}`]
+                        messages: [
+                            `
+Your application is running here:
+    im-server:  http://localhost:${port}/#/imServer
+    im-client:  http://localhost:${port}/#/imclient
+                        `
+                        ]
                     },
                     onErrors: config.dev.notifyOnErrors ? utils.createNotifierCallback() : undefined
                 })

@@ -1,12 +1,89 @@
 <!-- im客户端 入口 -->
 <template>
     <div class="imClientIndex-wrapper">
-        <header class="imClientIndex-header">
-            
-        </header>
-        <main class="imClientIndex-main">
-            <common-chat ref="common_chat" :chatEn="clientChatEn" :oprRoleName="'client'" @sendMsg="sendMsg"></common-chat>
-        </main>
+        <div class="imClientIndex-inner">
+            <header class="imClientIndex-header">
+                <div class="name-wrapper position-v-mid">
+                    <span v-if="chatInfoEn.chatState == 'robot'">您与机器人{{robotEn.robotName}}的对话</span>
+                    <span v-else-if="chatInfoEn.chatState == 'agent'">您与客服{{serverChatEn.serverChatName}}的对话</span>
+                </div>
+                <div class="position-h-v-mid">
+                    <img class="logo" src="image/lynkco_logo.png" />
+                </div>
+                <div class="close-wrapper position-v-mid">
+                    <i class="el-icon-close" @click="closeChat()"></i>
+                </div>
+            </header>
+            <main class="imClientIndex-main">
+                <common-chat ref="common_chat" :chatInfoEn="chatInfoEn" :oprRoleName="'client'" @sendMsg="sendMsg"></common-chat>
+            </main>
+        </div>
+        <!-- 转人工dialog -->
+        <el-dialog title="请选择咨询内容" class="im-queueDialog" :visible.sync="im_queueDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false">
+            <div class="main">
+                <el-radio-group v-model="im_queueDialog_selectedItem" class="item-group" @change="queueDialog_changeItem">
+                    <div class="item" v-for="(item, index) in im_queueDialog_kfList">
+                        <el-radio-button :label="item.queueId">{{item.queueName}}</el-radio-button>
+                    </div>
+                </el-radio-group>
+            </div>
+            <div class="footer">
+                <el-button type="primary" :disabled="im_queueDialog_selectedItem.length==0" @click="queueDialog_submit">开始咨询</el-button>
+            </div>
+        </el-dialog>
+        <!-- 满意度dialog-->
+        <el-dialog class="im-mydDialog" :visible.sync="im_mydDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false">
+            <div v-show="!im_mydDialogSubmitOk" class="main">
+                <p class="title">
+                    感谢你的咨询，请对我们的服务进行评价
+                </p>
+                <el-row class="rate-wrapper">
+                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='5'}" @click="mydDialog_setMyd(5)">
+                        <img src="image/rota-5.png" />
+                        <p>非常满意</p>
+                    </div>
+                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='4'}" @click="mydDialog_setMyd(4)">
+                        <img src="image/rota-4.png">
+                        <p>满意</p>
+                    </div>
+                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='3'}" @click="mydDialog_setMyd(3)">
+                        <img src="image/rota-3.png">
+                        <p>一般</p>
+                    </div>
+                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='2'}" @click="mydDialog_setMyd(2)">
+                        <img src="image/rota-2.png">
+                        <p>不满意</p>
+                    </div>
+                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='1'}" @click="mydDialog_setMyd(1)">
+                        <img src="image/rota-1.png">
+                        <p>非常不满意</p>
+                    </div>
+                </el-row>
+                <el-row>
+                    <el-input type="textarea" :maxlength="50" :rows="4" resize="none" placeholder="备注(选填，50字符以内)" v-model="im_mydDialog_form.remark"></el-input>
+                </el-row>
+                <el-button type="primary" class="submit-btn position-h-mid" @click="mydDialog_submit" :disabled="im_mydDialog_form.selectedItem==''">确定</el-button>
+            </div>
+            <div v-show="im_mydDialogSubmitOk" class="submit-main">
+                <i class="iconfont icon-tijiaochenggong"></i>
+                <p class="title">评价提交成功</p>
+                <p class="sub-title">
+                    <el-button type="text" @click="mydDialog_createNewChat">发起新的会话</el-button>
+                </p>
+            </div>
+        </el-dialog>
+        <!-- 离线留言 -->
+        <el-dialog class="im-leaveDialog" :visible.sync="im_leaveMsgVisible" :close-on-click-modal="false" :close-on-press-escape="false">
+           
+        </el-dialog>
+        <!-- 结束会话-->
+        <el-dialog class="im-logoutDialog" :visible.sync="im_logoutVisible" :close-on-click-modal="false" :close-on-press-escape="false">
+            <p class="title">结束本次会话？</p>
+            <div class="footer">
+                <el-button type="primary" @click="logoutDialog_cancel">取消</el-button>
+                <el-button type="primary" @click="logoutDialog_submit">结束会话</el-button>
+            </div>
+        </el-dialog>
     </div>
 </template>
 
@@ -20,15 +97,100 @@ export default {
     data() {
         return {
             socket: null,
-            clientChatEn: {
-                clientChatId: '',
-                clientChatName: '',
+            chatInfoEn: {
+                chatState: 'robot', // chat状态；robot 机器人、agent 客服、agentOff 离线、agentTransiting 客服转接中
+                connectionState: 'on', // 连接状态;on ：在线；off：离线
+                lastMsgTime: null, // 上一次消息的创建时间
+                playSound: true,
                 inputContent: '',
                 msgList: [],
                 state: 'on',
                 lastMsgShowTime: null // 最后一个消息的显示时间
+            }, // 会话信息，包括聊天记录、状态
+            clientChatEn: {
+                clientChatId: '',
+                clientChatName: '',
+                avatarUrl: 'image/im_client_avatar.png'
             }, // 当前账号的信息
-            serverChatEn: {} // 服务端chat信息
+            serverChatEn: {
+                serverChatName: '',
+                avatarUrl: ''
+            }, // 服务端chat信息
+            robotEn: {
+                robotName: '小旺',
+                avatarUrl: 'image/im_server_avatar.png'
+            }, // 机器人信息
+            faqList: [
+                { title: '如何更改于网上订购的机票？', content: '请联系对应的航空公司' },
+                {
+                    title: '如何预订“加长空间座位”？',
+                    content: '成功更改订票上的出发日期或时间后，网上系统会于一小时内签发电子机票并把电子票务收据发送到您在网上订票时所提供的电邮地址。'
+                },
+                { title: '我可享有多少寄舱行李限额？', content: '请联系对应的航空公司' },
+                { title: '我可携带多少手提行李？', content: '请联系对应的航空公司' },
+                { title: '要怎样才能申请退票？', content: '请联系对应的航空公司' }
+            ],
+            faqSelected: '-1',
+            inputContent_setTimeout: null, // 输入文字时在输入结束才修改具体内容
+            selectionRange: null, // 输入框选中的区域
+            shortcutMsgList: [], // 聊天区域的快捷回复列表
+            imgViewDialogVisible: false, // 图片查看dialog的显示
+            imgViewDialog_imgSrc: '', // 图片查看dialog的图片地址
+            im_queueDialogVisible: false, // 转人工队列dialog
+            im_queueDialog_kfList: [], // 转人工队列集合
+            im_queueDialog_selectedItem: '', // 选中的item对象
+            im_mydDialogSubmitOk: false, // 满意度已提交
+            im_mydDialogVisible: false, // 满意度dialog
+            im_mydDialog_form: {
+                selectedItem: '', // 选中的item
+                remark: ''
+            },
+            im_leaveMsgVisible: false, // 离线留言
+            im_leaveMsgResultVisible: false, // 离线留言已提交
+            im_leaveMsgDialog_form: {
+                email: '',
+                phone: '',
+                content: ''
+            },
+            im_leaveMsgDialog_rules: {
+                email: [
+                    {
+                        validator: function(rule, value, callback) {
+                            if (!/^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(value)) {
+                                callback(new Error('请输入正确的邮箱'));
+                            } else {
+                                callback();
+                            }
+                        },
+                        trigger: 'change'
+                    }
+                ],
+                phone: [
+                    {
+                        validator: function(rule, value, callback) {
+                            if (!/^((\d{3,4})|\d{3,4}-)?\d{7,8}$|^1[3-8]\d{9}$|^\d{5}$/.test(value)) {
+                                callback(new Error('请输入正确的电话号码'));
+                            } else {
+                                callback();
+                            }
+                        },
+                        trigger: 'change'
+                    }
+                ],
+                content: [
+                    {
+                        max: 100,
+                        message: '请输入2-100个字符',
+                        trigger: 'change'
+                    },
+                    {
+                        min: 2,
+                        message: '请输入2-100个字符',
+                        trigger: 'change'
+                    }
+                ]
+            },
+            im_logoutVisible: false // 结束会话显示
         };
     },
     computed: {},
@@ -174,13 +336,13 @@ export default {
     #common-wrapper();
 }
 
-.imClientIndex-wrapper {
+.imClientIndex-inner {
     margin: 10px;
     width: 500px;
     height: 550px;
     border: 1px solid #cccccc;
     overflow: hidden;
-    .imClientIndex-header{
+    .imClientIndex-header {
         height: 35px;
         box-sizing: border-box;
         background: #000000;

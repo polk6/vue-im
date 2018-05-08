@@ -1,12 +1,12 @@
 <!-- 聊天记录 -->
 <template>
     <div class="common_chat-wrapper">
-        <div class="imLog-inner">
+        <div class="common_chat-inner">
             <!-- 聊天记录 -->
             <div class="common_chat-main" id="common_chat_main" ref="common_chat_main">
                 <div class="common_chat-main-content">
                     <div class="inner">
-                        <div v-for="(item ,index) in chatEn.msgList" :key="index">
+                        <div v-for="(item ,index) in chatInfoEn.msgList" :key="index">
                             <!-- 系统消息 -->
                             <div v-if="item.role=='sys'" class="item sys">
                                 <!-- 1)文本类型 -->
@@ -63,10 +63,10 @@
                         <div maxlength="500" class="inputContent common_chat_emoji-wrapper-global" id="common_chat_input" contenteditable="true" @paste.stop="inputContent_paste" @keydown="inputContent_keydown" @mouseup="inputContent_mouseup" @mouseleave="inputContent_mouseup"></div>
                     </div>
                     <!-- 发送按钮 -->
-                    <el-button type="primary" size="small" class="send-btn" :class="chatEn.state" @click="sendText()" :disabled="chatEn.inputContent.length==0">发送</el-button>
+                    <el-button type="primary" size="small" class="send-btn" :class="chatInfoEn.state" @click="sendText()" :disabled="chatInfoEn.inputContent.length==0">发送</el-button>
                 </div>
                 <!-- 离线 -->
-                <div v-show="chatEn.state=='off' || chatEn.state=='end'" class="off-wrapper">
+                <div v-show="chatInfoEn.state=='off' || chatInfoEn.state=='end'" class="off-wrapper">
                     <span class="content">会话已经结束</span>
                 </div>
             </div>
@@ -92,7 +92,7 @@ export default {
         commonChatEmoji: common_chat_emoji
     },
     props: {
-        chatEn: {
+        chatInfoEn: {
             required: true,
             type: Object,
             default: {
@@ -121,26 +121,23 @@ export default {
         /**
          * 初始化
          * @param {Object} opts 可选对象
-         * @param {String} opts.oprType 操作类型,默认add
-         * @param {Object} opts.chatEn im会话对象
          */
         init: function(opts) {
             var self = this;
-            this.chatEn = opts.chatEn;
             // 初始化状态
             document.getElementById('common_chat_input').innerHTML = '';
             self.$refs.qqemoji.$data.faceHidden = true;
 
             // 在线状态
-            if (this.chatEn.state == 'on') {
+            if (this.chatInfoEn.state == 'on') {
                 // 1.显示在输入框的内容
                 setTimeout(function() {
                     // 未断开获取焦点
                     document.getElementById('common_chat_input').focus();
                     self.setInputContentSelectRange();
                     // 设置之前保存的输入框内容
-                    if (self.chatEn.inputContent) {
-                        self.setInputDiv(self.chatEn.inputContent);
+                    if (self.chatInfoEn.inputContent) {
+                        self.setInputDiv(self.chatInfoEn.inputContent);
                     }
                 }, 200);
             } else {
@@ -159,10 +156,10 @@ export default {
          */
         sendText: function() {
             var self = this;
-            if (self.chatEn.inputContent.length == '') {
+            if (self.chatInfoEn.inputContent.length == '') {
                 return;
             }
-            var msgContent = self.chatEn.inputContent;
+            var msgContent = self.chatInfoEn.inputContent;
             document.getElementById('common_chat_input').innerHTML = '';
             self.setInputContentByDiv();
 
@@ -194,7 +191,7 @@ export default {
             }
 
             // 3.修改store
-            this.chatEn.inputContent = tmpInputContent;
+            this.chatInfoEn.inputContent = tmpInputContent;
         },
 
         /**
@@ -482,14 +479,6 @@ export default {
 </script>
 <style lang="less">
 .common_chat-wrapper {
-    @keyframes progress-bar-stripes {
-        from {
-            background-position: 40px 0;
-        }
-        to {
-            background-position: 0 0;
-        }
-    }
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -497,27 +486,27 @@ export default {
     font-size: 12px;
     float: left;
     border: 0px;
-    .imLog-inner {
+    .common_chat-inner {
         width: 100%;
         height: 100%;
         .common_chat-main {
+            position: relative;
             height: calc(~'100% - 190px');
             overflow-y: auto;
             overflow-x: hidden;
-            position: relative;
             .common_chat-main-header {
-                text-align: center;
                 padding-top: 14px;
+                text-align: center;
                 .el-button {
+                    padding: 0px;
                     font-size: 12px;
                     color: #8d8d8d;
-                    padding: 0px;
                 }
             }
             .common_chat-main-content {
                 position: absolute;
                 width: 100%;
-                height: calc(~'100% - 30px');
+                height: 100%;
                 & > .inner {
                     padding-bottom: 20px;
                     .item {
@@ -525,9 +514,9 @@ export default {
                         overflow: hidden;
                     }
                     .sys {
-                        text-align: center;
                         color: #b0b0b0;
                         font-size: 12px;
+                        text-align: center;
                         .text-content {
                             padding-top: 20px;
                         }
@@ -546,27 +535,28 @@ export default {
                     }
                     .receiver,
                     .sender {
-                        font-size: 12px;
                         margin-top: 18px;
+                        font-size: 12px;
                         .headericon-wrapper {
                             float: left;
                         }
                         .info-wrapper {
+                            position: relative;
                             text-align: left;
                             font-size: 12px;
-                            position: relative;
                             .item-content {
-                                max-width: 330px;
-                                color: #3e3e3e;
-                                font-size: 12px;
                                 position: relative;
+                                max-width: 330px;
                                 margin-top: 10px;
-                                border-radius: 6px;
+                                color: #3e3e3e;
+                                font-size: 13px;
+                                border-radius: 3px;
                                 .text {
+                                    line-height: 1.8;
                                     white-space: normal;
                                     word-wrap: break-word;
                                     word-break: break-all;
-                                    padding: 13px 12px;
+                                    padding: 10px 12px;
                                 }
                                 .qqemoji {
                                     width: 24px;
@@ -582,19 +572,19 @@ export default {
                                     cursor: pointer;
                                 }
                                 .file {
+                                    width: 220px;
                                     padding: 10px 8px;
-                                    overflow: hidden;
                                     margin: 3px;
+                                    overflow: hidden;
                                     background: #fff;
                                     border-radius: 5px;
-                                    width: 220px;
                                     .el-button {
                                         padding: 0px;
                                         font-size: 12px;
                                     }
                                     .file-info {
-                                        padding: 0px 8px;
                                         float: left;
+                                        padding: 0px 8px;
                                         .file-name {
                                             width: 160px;
                                             display: inline-block;
@@ -609,9 +599,9 @@ export default {
                                         margin-top: 8px;
                                     }
                                     .file-icon {
-                                        font-size: 40px;
                                         float: left;
                                         color: #663399;
+                                        font-size: 40px;
                                     }
                                     .file-download {
                                         color: #00a8d7;
@@ -628,26 +618,116 @@ export default {
                                         top: 3px;
                                     }
                                 }
+                                .issueList {
+                                    width: 250px;
+                                    padding: 10px;
+                                    .title {
+                                        position: relative;
+                                        .content {
+                                            position: absolute;
+                                            margin-top: -1px;
+                                            margin-left: 6px;
+                                        }
+                                    }
+                                    .el-collapse-item__wrap {
+                                        background: transparent;
+                                    }
+                                    .el-collapse {
+                                        border: 0px;
+                                        margin-top: 8px;
+                                        margin-bottom: -8px;
+                                        .el-collapse-item__header {
+                                            font-size: 13px;
+                                            background: transparent;
+                                            color: #f7455d;
+                                            padding-left: 5px;
+                                        }
+                                        .el-collapse-item__wrap {
+                                            .el-collapse-item__content {
+                                                font-size: 12px;
+                                                color: #3e3e3e;
+                                                padding-left: 5px;
+                                            }
+                                        }
+                                    }
+                                }
+                                .issueExtend {
+                                    width: 250px;
+                                    padding: 10px 10px 0px;
+                                    .main {
+                                        border-top: 1px solid #eeeff0;
+                                        margin-top: 10px;
+                                        padding-top: 10px;
+                                        p {
+                                            margin-bottom: 5px;
+                                        }
+                                        .el-button {
+                                            font-size: 12px;
+                                            color: #f7455d;
+                                        }
+                                    }
+                                }
+                                .issueResult {
+                                    width: 250px;
+                                    .main {
+                                        padding: 10px;
+                                    }
+                                    .footer {
+                                        border-top: 1px solid #eeeff0;
+                                        height: 30px;
+                                        .btn {
+                                            width: 60px;
+                                            margin: 0px 30px;
+                                            padding: 6px 0px;
+                                            display: inline-block;
+                                            text-align: center;
+                                            font-size: 10px;
+                                            color: #8d8d8d;
+                                            cursor: pointer;
+                                            position: relative;
+                                            &:first-child::after {
+                                                top: 4px;
+                                                right: -30px;
+                                                width: 1px;
+                                                height: 80%;
+                                                content: '';
+                                                position: absolute;
+                                                background-color: #eeeff0;
+                                                z-index: 0;
+                                            }
+                                        }
+                                        .iconfont {
+                                            font-size: 10px;
+                                            margin-right: 5px;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                     .item.receiver {
                         margin-left: 5px;
                         .headericon-wrapper {
-                            padding: 15px 18px 15px 13px;
-                            .iconfont {
-                                border-width: 0px;
-                                border-radius: 50%;
-                                padding: 7px;
-                                color: white;
-                                font-size: 16px;
-                            }
+                            margin-right: 15px;
                         }
                         .info-wrapper {
                             .item-content {
+                                float: left;
+                                color: #000000;
                                 background-color: #f9fbfc;
                                 border: 1px solid #e6e6e6;
-                                float: left;
+                                &::before {
+                                    position: absolute;
+                                    top: -1px;
+                                    left: -10px;
+                                    width: 0px;
+                                    height: 0px;
+                                    content: '';
+                                    border-top: 0px;
+                                    border-right: 10px solid #f9fbfc;
+                                    border-bottom: 5px solid transparent;
+                                    border-left: 0px;
+                                }
                             }
                         }
                     }
@@ -655,28 +735,27 @@ export default {
                         margin-right: 5px;
                         .headericon-wrapper {
                             float: right;
-                            padding: 0px 18px 0px 13px;
-                            .kf-name {
-                                width: 40px;
-                                display: block;
-                                white-space: nowrap;
-                                text-overflow: ellipsis;
-                                overflow: hidden;
-                                text-align: center;
-                                color: #b0b0b0;
-                                font-size: 12px;
-                            }
-                            .kf-img {
-                                width: 40px;
-                                margin-top: 10px;
-                            }
+                            margin-left: 15px;
                         }
                         .info-wrapper {
                             float: right;
                             .item-content {
-                                background-color: #0095ff;
-                                border: 1px solid #0589b7;
-                                color: #eaf4fb;
+                                float: right;
+                                background: #0095ff;
+                                border: 1px solid #0095ff;
+                                color: #ffffff;
+                                &::before {
+                                    position: absolute;
+                                    top: -1px;
+                                    right: -10px;
+                                    width: 0px;
+                                    height: 0px;
+                                    content: '';
+                                    border-top: 0px;
+                                    border-right: 0px;
+                                    border-bottom: 5px solid transparent;
+                                    border-left: 10px solid #0095ff;
+                                }
                             }
                         }
                     }
@@ -685,13 +764,12 @@ export default {
         }
         .common_chat-footer {
             position: relative;
-            height: 190px;
             width: 100%;
             border-top: 1px solid #e6e6e6;
             .opr-wrapper {
-                text-align: left;
                 height: 20px;
-                padding: 10px 0px 10px 16px;
+                padding: 10px;
+                text-align: left;
                 & > .item {
                     margin-right: 12px;
                     float: left;
@@ -704,8 +782,8 @@ export default {
                 }
             }
             .input-wrapper {
-                padding: 2px 15px 0px;
                 position: relative;
+                padding: 2px 0px 0px 10px;
                 .inputContent {
                     width: 99%;
                     padding: 2px;
@@ -721,12 +799,12 @@ export default {
                     left: 10px;
                     width: 440px;
                     max-height: 80px;
+                    padding: 4px;
+                    font-size: 12px;
                     overflow-y: auto;
                     border: 1px solid #9b9aab;
                     border-radius: 3px;
-                    font-size: 12px;
                     background-color: #fff;
-                    padding: 4px;
                     cursor: pointer;
                     p {
                         padding: 4px;
@@ -734,16 +812,16 @@ export default {
                             background-color: #ded1cc;
                         }
                         .key {
-                            width: 50px;
                             display: inline-block;
+                            width: 50px;
                             white-space: nowrap;
                             text-overflow: ellipsis;
                             overflow: hidden;
                         }
                         .content {
-                            margin-left: 10px;
-                            width: 350px;
                             display: inline-block;
+                            width: 350px;
+                            margin-left: 10px;
                             white-space: nowrap;
                             text-overflow: ellipsis;
                             overflow: hidden;
