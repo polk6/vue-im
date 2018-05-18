@@ -1,7 +1,7 @@
 <!-- im服务端入口 -->
 <template>
-    <div class="imServerIndex-wrapper">
-        <main class="imServerIndex-main">
+    <div class="imServer-wrapper">
+        <main class="imServer-main">
             <im-record class="item im-record" @selectedChat="selectedChat()"></im-record>
             <im-chat v-if="storeSelectedChatEn!=null" ref="im_chat" class="item im-chat"></im-chat>
         </main>
@@ -43,16 +43,16 @@ export default {
 <style lang="less">
 @import '../../common/css/base.less';
 
-.imServerIndex-wrapper {
+.imServer-wrapper {
     #common-wrapper();
 }
 
-.imServerIndex-wrapper {
+.imServer-wrapper {
     width: 100%;
     height: 100%;
     position: absolute;
     overflow: hidden;
-    .imServerIndex-main {
+    .imServer-main {
         height: 100%;
         max-width: 100%;
         position: relative;

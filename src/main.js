@@ -10,11 +10,12 @@ Vue.prototype.$http = http;
 // ak
 import ak from '@/common/ak.js';
 Vue.prototype.$ak = ak;
-
 // element-ui
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 Vue.use(ElementUI);
+// font-awesome
+import 'font-awesome/css/font-awesome.min.css'
 
 // config
 Vue.config.productionTip = false;

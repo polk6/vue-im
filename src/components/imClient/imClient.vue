@@ -1,28 +1,57 @@
 <!-- im客户端 入口 -->
 <template>
-    <div class="imClientIndex-wrapper">
-        <div class="imClientIndex-inner">
-            <header class="imClientIndex-header">
+    <div class="imClient-wrapper">
+        <div class="imClient-inner">
+            <header class="imClient-header">
                 <div class="name-wrapper position-v-mid">
                     <span v-if="chatInfoEn.chatState == 'robot'">您与机器人{{robotEn.robotName}}的对话</span>
                     <span v-else-if="chatInfoEn.chatState == 'agent'">您与客服{{serverChatEn.serverChatName}}的对话</span>
                 </div>
                 <div class="position-h-v-mid">
-                    <img class="logo" src="image/lynkco_logo.png" />
+                    <img class="logo" src="image/geely_logo.png" />
                 </div>
                 <div class="close-wrapper position-v-mid">
                     <i class="el-icon-close" @click="closeChat()"></i>
                 </div>
             </header>
-            <main class="imClientIndex-main">
-                <common-chat ref="common_chat" :chatInfoEn="chatInfoEn" :oprRoleName="'client'" @sendMsg="sendMsg"></common-chat>
+            <main class="imClient-main">
+                <!-- 聊天框 -->
+                <div class="item imClientChat-wrapper">
+                    <!-- 聊天记录 -->
+                    <common-chat ref="common_chat" :chatInfoEn="chatInfoEn" :oprRoleName="'client'" @sendMsg="sendMsg"></common-chat>
+                </div>
+                <!-- 信息区域 -->
+                <div class="item imClientInfo-wrapper">
+                    <article class="imClientInfo-item imClientInfo-notice-wrapper">
+                        <header class="imClientInfo-item-header">
+                            公告
+                        </header>
+                        <main class="imClientInfo-notice-main">
+                            <p class="title">8.25 盲订开始了，快去下载App。</p>
+                            <img class="img" src="image/lynkco_ad.png" />
+                        </main>
+                    </article>
+                    <!-- 常见问题 -->
+                    <article class="imClientInfo-item imClientInfo-faq-wrapper">
+                        <header class="imClientInfo-item-header">
+                            常见问题
+                        </header>
+                        <main class="imClientInfo-faq-main">
+                            <el-collapse v-model="faqSelected" accordion>
+                                <el-collapse-item v-for="(faqItem, index) in faqList" :key="index" :name="index" :title="faqItem.title">
+                                    <div v-html="faqItem.content"></div>
+                                </el-collapse-item>
+                            </el-collapse>
+                        </main>
+                    </article>
+                </div>
             </main>
         </div>
         <!-- 转人工dialog -->
         <el-dialog title="请选择咨询内容" class="im-queueDialog" :visible.sync="im_queueDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false">
             <div class="main">
                 <el-radio-group v-model="im_queueDialog_selectedItem" class="item-group" @change="queueDialog_changeItem">
-                    <div class="item" v-for="(item, index) in im_queueDialog_kfList">
+                    <div class="item" v-for="(item, index) in im_queueDialog_kfList" :key="index">
                         <el-radio-button :label="item.queueId">{{item.queueName}}</el-radio-button>
                     </div>
                 </el-radio-group>
@@ -32,49 +61,12 @@
             </div>
         </el-dialog>
         <!-- 满意度dialog-->
-        <el-dialog class="im-mydDialog" :visible.sync="im_mydDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false">
-            <div v-show="!im_mydDialogSubmitOk" class="main">
-                <p class="title">
-                    感谢你的咨询，请对我们的服务进行评价
-                </p>
-                <el-row class="rate-wrapper">
-                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='5'}" @click="mydDialog_setMyd(5)">
-                        <img src="image/rota-5.png" />
-                        <p>非常满意</p>
-                    </div>
-                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='4'}" @click="mydDialog_setMyd(4)">
-                        <img src="image/rota-4.png">
-                        <p>满意</p>
-                    </div>
-                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='3'}" @click="mydDialog_setMyd(3)">
-                        <img src="image/rota-3.png">
-                        <p>一般</p>
-                    </div>
-                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='2'}" @click="mydDialog_setMyd(2)">
-                        <img src="image/rota-2.png">
-                        <p>不满意</p>
-                    </div>
-                    <div class="rate-item" :class="{active:im_mydDialog_form.selectedItem=='1'}" @click="mydDialog_setMyd(1)">
-                        <img src="image/rota-1.png">
-                        <p>非常不满意</p>
-                    </div>
-                </el-row>
-                <el-row>
-                    <el-input type="textarea" :maxlength="50" :rows="4" resize="none" placeholder="备注(选填，50字符以内)" v-model="im_mydDialog_form.remark"></el-input>
-                </el-row>
-                <el-button type="primary" class="submit-btn position-h-mid" @click="mydDialog_submit" :disabled="im_mydDialog_form.selectedItem==''">确定</el-button>
-            </div>
-            <div v-show="im_mydDialogSubmitOk" class="submit-main">
-                <i class="iconfont icon-tijiaochenggong"></i>
-                <p class="title">评价提交成功</p>
-                <p class="sub-title">
-                    <el-button type="text" @click="mydDialog_createNewChat">发起新的会话</el-button>
-                </p>
-            </div>
+        <el-dialog class="im-mydDialog" :visible.sync="rateDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false">
+            <im-rate></im-rate>
         </el-dialog>
         <!-- 离线留言 -->
-        <el-dialog class="im-leaveDialog" :visible.sync="im_leaveMsgVisible" :close-on-click-modal="false" :close-on-press-escape="false">
-           
+        <el-dialog class="im-leaveDialog" :visible.sync="leaveDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false">
+            <im-leave></im-leave>
         </el-dialog>
         <!-- 结束会话-->
         <el-dialog class="im-logoutDialog" :visible.sync="im_logoutVisible" :close-on-click-modal="false" :close-on-press-escape="false">
@@ -89,10 +81,14 @@
 
 <script >
 import commonChat from '@/components/common/common_chat.vue';
+import imRate from './imRate.vue';
+import imLeave from './imLeave.vue';
 
 export default {
     components: {
-        commonChat: commonChat
+        commonChat: commonChat,
+        imRate: imRate,
+        imLeave: imLeave
     },
     data() {
         return {
@@ -134,63 +130,12 @@ export default {
             inputContent_setTimeout: null, // 输入文字时在输入结束才修改具体内容
             selectionRange: null, // 输入框选中的区域
             shortcutMsgList: [], // 聊天区域的快捷回复列表
-            imgViewDialogVisible: false, // 图片查看dialog的显示
-            imgViewDialog_imgSrc: '', // 图片查看dialog的图片地址
             im_queueDialogVisible: false, // 转人工队列dialog
             im_queueDialog_kfList: [], // 转人工队列集合
             im_queueDialog_selectedItem: '', // 选中的item对象
-            im_mydDialogSubmitOk: false, // 满意度已提交
-            im_mydDialogVisible: false, // 满意度dialog
-            im_mydDialog_form: {
-                selectedItem: '', // 选中的item
-                remark: ''
-            },
-            im_leaveMsgVisible: false, // 离线留言
-            im_leaveMsgResultVisible: false, // 离线留言已提交
-            im_leaveMsgDialog_form: {
-                email: '',
-                phone: '',
-                content: ''
-            },
-            im_leaveMsgDialog_rules: {
-                email: [
-                    {
-                        validator: function(rule, value, callback) {
-                            if (!/^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(value)) {
-                                callback(new Error('请输入正确的邮箱'));
-                            } else {
-                                callback();
-                            }
-                        },
-                        trigger: 'change'
-                    }
-                ],
-                phone: [
-                    {
-                        validator: function(rule, value, callback) {
-                            if (!/^((\d{3,4})|\d{3,4}-)?\d{7,8}$|^1[3-8]\d{9}$|^\d{5}$/.test(value)) {
-                                callback(new Error('请输入正确的电话号码'));
-                            } else {
-                                callback();
-                            }
-                        },
-                        trigger: 'change'
-                    }
-                ],
-                content: [
-                    {
-                        max: 100,
-                        message: '请输入2-100个字符',
-                        trigger: 'change'
-                    },
-                    {
-                        min: 2,
-                        message: '请输入2-100个字符',
-                        trigger: 'change'
-                    }
-                ]
-            },
-            im_logoutVisible: false // 结束会话显示
+            im_logoutVisible: false, // 结束会话显示
+            rateDialogVisible:false, // 评价dialog
+            leaveDialogVisible:false, // 留言dialog
         };
     },
     computed: {},
@@ -199,7 +144,7 @@ export default {
         /**
          * 注册账号信息
          */
-        regclientChatEn: function() {
+        regClientChatEn: function() {
             this.$data.clientChatEn.clientChatId = Number.parseInt(Date.now() + Math.random());
             // 名称格式：姓+6位数字
             var userName = '';
@@ -273,30 +218,27 @@ export default {
             // 1.设定默认值
             msg.createTime = msg.createTime == undefined ? new Date() : msg.createTime;
 
-            var msgList = this.$data.clientChatEn.msgList ? this.$data.clientChatEn.msgList : [];
+            var msgList = this.$data.chatInfoEn.msgList ? this.$data.chatInfoEn.msgList : [];
 
             // 2.插入消息
             // 1)插入日期
             // 实际场景中，在消息上方是否显示时间是由后台传递给前台的消息中附加上的，可参考 微信Web版
             // 此处进行手动设置，5分钟之内的消息，只显示一次消息
             msg.createTime = new Date(msg.createTime);
-            if (
-                this.$data.clientChatEn.lastMsgShowTime == null ||
-                msg.createTime.getTime() - this.$data.clientChatEn.lastMsgShowTime.getTime() > 1000 * 60 * 5
-            ) {
+            if (this.$data.chatInfoEn.lastMsgShowTime == null || msg.createTime.getTime() - this.$data.chatInfoEn.lastMsgShowTime.getTime() > 1000 * 60 * 5) {
                 msgList.push({
                     role: 'sys',
                     contentType: 'text',
-                    content: this.$ak.Utils.getDateTimeStr(msg.createTime, 'H:i')
+                    content: this.$ak.Utils.getDateTimeStr(msg.createTime, 'Y-m-d H:i:s')
                 });
-                this.$data.clientChatEn.lastMsgShowTime = msg.createTime;
+                this.$data.chatInfoEn.lastMsgShowTime = msg.createTime;
             }
 
             // 2)插入消息
             msgList.push(msg);
 
             // 3.设置chat对象相关属性
-            this.$data.clientChatEn.msgList = msgList;
+            this.$data.chatInfoEn.msgList = msgList;
 
             // 4.回调
             successCallback && successCallback();
@@ -304,26 +246,85 @@ export default {
 
         /**
          * 发送消息
-         * @param {Object} rs 回调对象
+         * @param {Object} msg 消息对象
          */
-        sendMsg: function(rs) {
-            var self = this;
-            var msg = rs.msg;
+        sendMsg: function(msg) {
             msg.role = 'client';
-            // 1.socket发送消息
-            this.$data.socket.emit('clientSendMsg', {
-                serverChatId: self.$data.serverChatEn.serverChatId,
-                clientChatId: self.$data.clientChatEn.clientChatId,
-                msg: msg
-            });
+            msg.avatarUrl = this.$data.clientChatEn.avatarUrl;
+            if (this.$data.chatInfoEn.chatState == 'robot') {
+                // 机器人发送接口
+            } else if (this.$data.chatInfoEn.chatState == 'agent') {
+                // 客服接口
+                this.$data.socket.emit('clientSendMsg', {
+                    serverChatId: this.$data.serverChatEn.serverChatId,
+                    clientChatId: this.$data.clientChatEn.clientChatId,
+                    msg: msg
+                });
+            }
             // 2.添加到消息集合李
-            this.addChatMsg(msg, () => {
-                this.$refs.common_chat.goEnd();
+            var self = this;
+            this.addChatMsg(msg, function() {
+                self.goEnd();
+            });
+        },
+
+        /**
+         * 显示队列Dialog
+         * @param {Number} robotMode 1:工作时间内，所有会话由人工客服先接待。
+         */
+        queueDialog_show: function(robotMode) {
+            this.$data.im_queueDialog_kfList = [{ queueId: '1', queueName: '咨询' }, { queueId: '2', queueName: '反馈' }];
+            this.$data.im_queueDialogVisible = true;
+            this.$data.im_queueDialog_selectedItem = [];
+        },
+
+        /**
+         * 队列dialog_选中
+         */
+        queueDialog_changeItem: function(e) {},
+
+        /**
+         * 队列dialog_提交
+         */
+        queueDialog_submit: function() {
+            this.$data.im_queueDialogVisible = false;
+            this.$data.chatInfoEn.chatState = 'agent';
+            this.regSocket();
+            this.goEnd();
+        },
+
+        /**
+         * 注销dialog_提交
+         */
+        logoutDialog_submit: function() {
+            this.$data.im_logoutVisible = false;
+            this.addChatMsg({
+                role: 'sys',
+                content: '本次会话已结束'
+            });
+        },
+
+        /**
+         * 注销dialog_取消
+         */
+        logoutDialog_cancel: function() {
+            this.$data.im_logoutVisible = false;
+        },
+
+        /**
+         * 聊天记录滚动到底部
+         */
+        goEnd: function() {
+            var self = this;
+            this.$nextTick(function() {
+                setTimeout(function() {
+                    self.$refs.common_chat.scrollTop = self.$refs.common_chat.scrollHeight;
+                }, 100);
             });
         }
     },
     mounted() {
-        this.regclientChatEn();
+        this.regClientChatEn();
         this.regSocket();
     }
 };
@@ -332,35 +333,117 @@ export default {
 <style lang="less">
 @import '../../common/css/base.less';
 
-.imClientIndex-wrapper {
+.imClient-wrapper {
     #common-wrapper();
 }
 
-.imClientIndex-inner {
-    margin: 10px;
-    width: 500px;
-    height: 550px;
-    border: 1px solid #cccccc;
+.imClient-inner {
+    width: 850px;
+    height: 100%;
+    margin: 10px auto 0px;
     overflow: hidden;
-    .imClientIndex-header {
+    box-shadow: 0 1px 5px 2px #ccc;
+    .imClient-header {
+        position: relative;
         height: 35px;
         box-sizing: border-box;
-        background: #000000;
+        background: #1072b5;
+        font-size: 13px;
+        color: #ffffff;
+        .name-wrapper {
+            margin-left: 20px;
+        }
+        .logo {
+            height: 45px;
+            width: auto;
+        }
+        .close-wrapper {
+            right: 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
     }
-    .imClientIndex-main {
-        height: 100%;
+    .imClient-main {
         max-width: 100%;
+        height: 520px;
         position: relative;
         & > .item {
             float: left;
-            border-right: 1px solid #e6e6e6;
             height: 100%;
+            border-top-width: 0px;
+            border-right-width: 0px;
+            box-sizing: border-box;
+            &:last-child {
+                border-right-width: 1px;
+            }
         }
-        & > .im-record {
-            width: 280px;
+        & > .imClientChat-wrapper {
+            width: 550px;
         }
-        & > .im-chat {
-            width: calc(~'99% - 280px');
+        & > .imClientInfo-wrapper {
+            width: 300px;
+        }
+    }
+}
+
+// 信息区域
+.imClientInfo-wrapper {
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    .imClientInfo-item {
+        .imClientInfo-item-header {
+            font-weight: bolder;
+            font-size: 16px;
+            color: #1072b5;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ccc;
+        }
+    }
+    .imClientInfo-notice-wrapper {
+        .imClientInfo-notice-main {
+            padding: 10px 15px 0px;
+            & > .title {
+                font-size: 12px;
+                color: #000000;
+            }
+            & > .img {
+                width: 265px;
+                height: 120px;
+                margin-top: 10px;
+            }
+        }
+    }
+    .imClientInfo-faq-wrapper {
+        .imClientInfo-faq-main {
+            height: 260px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            .el-collapse {
+                border: 0px;
+                .el-collapse-item__header {
+                    position: relative;
+                    padding: 0px 15px;
+                    font-size: 12px;
+                    background: transparent;
+                    color: #000000;
+                    &.is-active {
+                        color: #f7455d;
+                    }
+                    .el-collapse-item__arrow {
+                        position: absolute;
+                        left: 267px;
+                    }
+                }
+                .el-collapse-item__wrap {
+                    background: transparent;
+                    .el-collapse-item__content {
+                        font-size: 12px;
+                        color: #959699;
+                        padding: 0px 15px 10px;
+                    }
+                }
+            }
         }
     }
 }

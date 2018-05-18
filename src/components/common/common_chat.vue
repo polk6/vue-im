@@ -28,7 +28,7 @@
                                     <!-- 3)文件类型 -->
                                     <div v-else-if="item.contentType=='file'" class="item-content">
                                         <div class="file">
-                                            <i class="file-icon iconfont icon-file"></i>
+                                            <i class="file-icon iconfont fa fa-file"></i>
                                             <div class="file-info">
                                                 <p class="file-name">{{getFileName(item.fileName)}}</p>
                                                 <div class="file-opr">
@@ -52,7 +52,7 @@
                     <div class="opr-wrapper">
                         <common-chat-emoji class="item" ref="qqemoji" @select="qqemoji_selectFace"></common-chat-emoji>
                         <a class="item" href="javascript:void(0)" @click="fileUpload_click('file')">
-                            <i class="item iconfont icon-IMwenjian"></i>
+                            <i class="iconfont fa fa-file-o"></i>
                         </a>
                         <form method="post" enctype="multipart/form-data">
                             <input type="file" name="uploadFile" id="common_chat_opr_fileUpload" style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;">
@@ -60,7 +60,7 @@
                     </div>
                     <!-- 聊天输入框 -->
                     <div class="input-wrapper">
-                        <div maxlength="500" class="inputContent common_chat_emoji-wrapper-global" id="common_chat_input" contenteditable="true" @paste.stop="inputContent_paste" @keydown="inputContent_keydown" @mouseup="inputContent_mouseup" @mouseleave="inputContent_mouseup"></div>
+                        <div maxlength="500" class="inputContent common_chat_emoji-wrapper-global" id="common_chat_input" contenteditable="true" @paste.stop="inputContent_paste" @drop="inputContent_drop" @keydown="inputContent_keydown" @mouseup="inputContent_mouseup" @mouseleave="inputContent_mouseup"></div>
                     </div>
                     <!-- 发送按钮 -->
                     <el-button type="primary" size="small" class="send-btn" :class="chatInfoEn.state" @click="sendText()" :disabled="chatInfoEn.inputContent.length==0">发送</el-button>
@@ -74,7 +74,7 @@
         <!-- 图片查看dialog -->
         <el-dialog title="" :visible.sync="imgViewDialogVisible" class="imgView-dialog" :modal="false">
             <div class="header">
-                <i class="iconfont icon-IM-tupianguanbi" @click="imgViewDialog_close"></i>
+                <i class="iconfont fa fa-remove " @click="imgViewDialog_close"></i>
             </div>
             <div class="main">
                 <img class="img" :src="imgViewDialog_imgSrc" />
@@ -179,7 +179,7 @@ export default {
             var htmlStr = document.getElementById('common_chat_input').innerHTML;
 
             // 1.转换表情为纯文本：<img textanme="[笑]"/> => [笑]
-            var tmpInputContent = htmlStr.replace(/<img.+?text=\"(.+?)\".+?>/g, '[$1]').replace(/<.+?>/g, '');
+            var tmpInputContent = htmlStr.replace(/<img.+?text=\"(.+?)\".?>/g, '[$1]').replace(/<.+?>/g, '');
 
             // 2.设置最长长度
             if (tmpInputContent.length > 500) {
@@ -447,6 +447,16 @@ export default {
         },
 
         /**
+         * 输入框的拖拽
+         */
+        inputContent_drop: function(e) {
+            var self = this;
+            setTimeout(function() {
+                self.setInputContentByDiv();
+            }, 100);
+        },
+
+        /**
          * 发送消息，e.g. 文本、图片、文件
          * @param {Object} msg 消息对象
          */
@@ -471,7 +481,6 @@ export default {
                     this.$refs.common_chat_main.scrollTop = this.$refs.common_chat_main.scrollHeight;
                 }, 100);
             });
-            //  this.$refs.common_chat_main.scrollTop = this.$refs.common_chat_main.scrollHeight;
         }
     },
     mounted() {}

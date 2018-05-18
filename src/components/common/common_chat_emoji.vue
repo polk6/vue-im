@@ -2,7 +2,7 @@
 <template>
     <div class="common_chat_emoji-wrapper common_chat_emoji-wrapper-global">
         <a href="javascript:void(0)" @click="toggleFaceHidden">
-            <i class="iconfont icon-IMbiaoqing float-left"></i>
+            <i class="iconfont fa fa-smile-o float-left"></i>
         </a>
         <div class="list-wrapper" v-show="!faceHidden">
             <div class="list-inner" @click="selectFace">
