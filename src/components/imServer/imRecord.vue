@@ -6,19 +6,26 @@
                 <img class="kf-avatar" :src="storeServerChatEn.avatarUrl" />
                 <span class="kf-name position-h-v-mid">{{storeServerChatEn.serverChatName}}</span>
             </div>
+            <div class="client-info-wrapper">
+                <p>
+                    <i class="fa fa-user on"></i>{{onlineChatCount}}</p>
+                <p>
+                    <i class="fa fa-user off"></i>{{offlineChatCount}}</p>
+            </div>
         </header>
         <main class="main">
             <div v-if="storeCurrentChatEnlist.length>0" class="item-list">
-                <div class="item" v-for="(tmpEn, index) in storeCurrentChatEnlist" :key="index" @click="selectChat(tmpEn)" v-bind:class="{ active: selectedChatEn!=null && tmpEn.chatId==selectedChatEn.chatId}">
+                <div class="item" v-for="(tmpEn, index) in storeCurrentChatEnlist" :key="index" @click="selectChat(tmpEn)" v-bind:class="{ active: selectedChatEn!=null && tmpEn.clientChatId==selectedChatEn.clientChatId}">
                     <div class="followicon-wrapper">
                         <i class="iconfont icon-zhidingwujiaoxing position-h-v-mid" :class="{ active: tmpEn.isFollow}" @click.stop="toggleFollowIcon(tmpEn)"></i>
                     </div>
+                    <!-- 客户端头像 -->
                     <div class="platicon-wrapper">
-                        <div class="header-img position-h-v-mid" :class="getBgClass(tmpEn.chatName)">{{tmpEn.chatName.substr(0,1)}}</div>
+                        <div class="header-img position-h-v-mid" :class="getBgClass(tmpEn.clientChatName)">{{tmpEn.clientChatName.substr(0,1)}}</div>
                     </div>
                     <div class="info-wrapper">
                         <p class="first-p">
-                            <span class="name">{{tmpEn.chatName}}</span>
+                            <span class="name">{{tmpEn.clientChatName}}</span>
                             <span class="lastMsgTime">{{getLastMsgTimeStr(tmpEn.lastMsgTime)}}</span>
                         </p>
                         <p class="second-p">
@@ -30,7 +37,7 @@
             </div>
             <div v-else-if="storeCurrentChatEnlist.length==0" class="empty-wrapper">
                 <div class="content">
-                    <i class="iconfont icon-chat empty-img"></i>
+                    <i class="iconfont fa fa-commenting-o"></i>
                     <p class="title">当前没有会话</p>
                 </div>
             </div>
@@ -41,7 +48,10 @@
 <script>
 export default {
     data() {
-        return {};
+        return {
+            onlineChatCount: 0,
+            offlineChatCount: 0
+        };
     },
     computed: {
         selectedChatEn() {
@@ -55,14 +65,18 @@ export default {
             return this.$store.imServerStore.getters.serverChatEn;
         }
     },
-    watch: {},
+    watch: {
+        storeServerChatEn(value){
+            console.log(1);
+        }
+    },
     methods: {
         /**
          * 选中当前列表的chat
          * @param {Object} en call实体类
          */
         selectChat: function(en) {
-            this.$store.imServerStore.dispatch('selectChat', { chatId: en.chatId });
+            this.$store.imServerStore.dispatch('selectChat', { clientChatId: en.clientChatId });
             this.$emit('selectedChat', {}); // 事件上传
         },
 
@@ -77,10 +91,10 @@ export default {
 
         /**
          * 获取背景class
-         * @param {string} chatName 姓名
+         * @param {string} clientChatName 姓名
          */
-        getBgClass: function(chatName) {
-            var rs = chatName.charCodeAt(0) % 5;
+        getBgClass: function(clientChatName) {
+            var rs = clientChatName.charCodeAt(0) % 5;
             return 'bg' + rs;
         },
 
@@ -106,7 +120,10 @@ export default {
     overflow: hidden;
     border: 0px;
     & > .header {
+        display: flex;
+        align-items: center;
         height: 50px;
+        border-bottom: 1px solid #e6e6e6;
         .kf-info-wrapper {
             position: relative;
             width: 150px;
@@ -116,8 +133,22 @@ export default {
                 width: 50px;
                 height: 50px;
             }
-            .kf-name{
+            .kf-name {
                 font-size: 16px;
+            }
+        }
+        .client-info-wrapper {
+            p:first-child {
+                margin-bottom: 5px;
+            }
+            .fa {
+                margin-right: 10px;
+                &.on {
+                    color: #70ed3a;
+                }
+                &.off {
+                    color: #bbbbbb;
+                }
             }
         }
     }
@@ -257,7 +288,7 @@ export default {
                     font-size: 90px;
                 }
                 .title {
-                    margin-top: 5px;
+                    margin-top: 25px;
                 }
             }
         }

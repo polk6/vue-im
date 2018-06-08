@@ -452,13 +452,13 @@ var imVm = new Vue({
             self.$data.socket = io('http://localhost:3001');
             self.$data.socket.on('connect', function() {
                 // 上线
-                self.$data.socket.emit('clientOn', {
+                self.$data.socket.emit('CLIENT_ON', {
                     clientChatId: self.$data.clientChatEn.clientChatId,
                     clientChatName: self.$data.clientChatEn.clientChatName
                 });
 
                 // 服务端链接成功
-                self.$data.socket.on('serverConnected', function(data) {
+                self.$data.socket.on('SERVER_CONNECTED', function(data) {
                     // 1)获取客服消息
                     self.$data.serverChatEn.serverChatId = data.serverChatId;
                     self.$data.serverChatEn.serverChatName = data.serverChatName;
@@ -472,7 +472,7 @@ var imVm = new Vue({
                 });
 
                 //  接受服务端信息
-                self.$data.socket.on('serverSendMsg', function(data) {
+                self.$data.socket.on('SERVER_SEND_MSG', function(data) {
                     if (self.$data.chatInfoEn.chatState == 'robot') {
                         data.msg.avatarUrl = self.$data.robotEn.avatarUrl;
                     } else if (self.$data.chatInfoEn.chatState == 'agent') {
@@ -534,7 +534,7 @@ var imVm = new Vue({
                 // 机器人发送接口
             } else if (this.$data.chatInfoEn.chatState == 'agent') {
                 // 客服接口
-                this.$data.socket.emit('clientSendMsg', {
+                this.$data.socket.emit('CLIENT_SEND_MSG', {
                     serverChatId: this.$data.serverChatEn.serverChatId,
                     clientChatId: this.$data.clientChatEn.clientChatId,
                     msg: msg

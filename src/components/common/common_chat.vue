@@ -39,6 +39,13 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <!-- 4)文本类型 -->
+                                    <div v-if="item.contentType=='transformServer'" class="item-content common_chat_emoji-wrapper-global">
+                                        <p class="text">
+                                            当前没有配置机器人，
+                                            <el-button type="text" @click="chatCallback('transformServer')">转接客服</el-button>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -325,7 +332,7 @@ export default {
                         this.$http.uploadFile({
                             url: '/upload',
                             params: formData,
-                            successCallback: rs => {
+                            successCallback: (rs) => {
                                 console.log(file);
                                 console.log(rs);
                                 document.getElementById('common_chat_opr_fileUpload').value = '';
@@ -390,7 +397,7 @@ export default {
             this.$http.uploadFile({
                 url: '/upload',
                 params: formData,
-                successCallback: rs => {
+                successCallback: (rs) => {
                     console.log(rs);
                     document.getElementById('common_chat_opr_fileUpload').value = '';
                     this.sendMsg({
@@ -469,6 +476,16 @@ export default {
                     document.getElementById('common_chat_input').focus();
                     self.goEnd();
                 }
+            });
+        },
+
+        /**
+         * 传递回调
+         */
+        chatCallback: function(emitType, data) {
+            this.$emit('chatCallback', {
+                eventType: emitType,
+                data: data
             });
         },
 
@@ -724,7 +741,7 @@ export default {
                                 float: left;
                                 color: #000000;
                                 background-color: #f9fbfc;
-                                border: 1px solid #e6e6e6;
+                                border: 1px solid #ccc;
                                 &::before {
                                     position: absolute;
                                     top: -1px;
@@ -774,7 +791,7 @@ export default {
         .common_chat-footer {
             position: relative;
             width: 100%;
-            border-top: 1px solid #e6e6e6;
+            border-top: 1px solid #ccc;
             .opr-wrapper {
                 height: 20px;
                 padding: 10px;

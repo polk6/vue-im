@@ -151,10 +151,10 @@ app.listen(3000);
 var server = require('http').createServer();
 var io = require('socket.io')(server);
 var serverChatObj = null; // 服务端Chat对象，这里只需要一个
-var clientChatDic = {}; // 客户端Socket字典
+var clientChatDic = new Map(); // 客户端Socket字典
 io.on('connection', function(socket) {
     // 服务端chat新上线
-    socket.on('serverOn', function(data) {
+    socket.on('SERVER_ON', function(data) {
         console.log('有新的服务端socket连接了，服务端Id：' + data.serverChatId);
         serverChatObj = {
             serverChatId: data.serverChatId,
@@ -164,22 +164,24 @@ io.on('connection', function(socket) {
     });
 
     // 服务端chat发送了信息
-    socket.on('serverSendMsg', function(data) {
-        if (clientChatDic[data.clientChatId]) {
-            clientChatDic[data.clientChatId].socket.emit('serverSendMsg', { msg: data.msg });
+    socket.on('SERVER_SEND_MSG', function(data) {
+        if (clientChatDic.has(data.clientChatId)) {
+            clientChatDic.get(data.clientChatId).socket.emit('SERVER_SEND_MSG', { msg: data.msg });
         }
     });
 
-    // 客户端chat新上线
-    socket.on('clientOn', function(data) {
-        console.log('有新的客户socket连接了，客户Id：' + data.clientChatId);
+    // 客户端上线
+    socket.on('CLIENT_ON', function(data) {
+        let clientChatEn = data.clientChatEn;
+        let serverChatEn = data.serverChatEn;
+        console.log('有新的客户socket连接了，客户Id：' + clientChatEn.clientChatId);
         // 1)添加到客户端字典里
-        clientChatDic[data.clientChatId] = {
-            clientChatName: data.clientChatName,
+        clientChatDic.set(clientChatEn.clientChatId, {
+            clientChatEn: clientChatEn,
             socket: socket
-        };
+        });
         if (serverChatObj == null) {
-            socket.emit('serverSendMsg', {
+            socket.emit('SERVER_SEND_MSG', {
                 msg: {
                     role: 'sys',
                     contentType: 'text',
@@ -188,23 +190,33 @@ io.on('connection', function(socket) {
             });
         } else {
             // 2)通知客户端有客服连接
-            socket.emit('serverConnected', {
-                serverChatId: serverChatObj.serverChatId,
-                serverChatName: serverChatObj.serverChatName
+            socket.emit('SERVER_CONNECTED', {
+                serverChatEn: serverChatObj
             });
             // 3)通知服务端有客户接入
-            serverChatObj.socket.emit('clientOn', {
-                clientChatId: data.clientChatId,
-                clientChatName: data.clientChatName
+            serverChatObj.socket.emit('CLIENT_ON', {
+                clientChatEn: clientChatEn
             });
         }
     });
 
+    // 客户端离线
+    socket.on('CLIENT_OFF', function(data) {
+        let clientChatEn = data.clientChatEn;
+        let serverChatEn = data.serverChatEn;
+        console.log('客户socket连接断开了，客户Id：' + data.clientChatId);
+
+        // 通知服务端
+        serverChatObj.socket.emit('CLIENT_OFF', {
+            clientChatEn: clientChatEn
+        });
+    });
+
     // 客户端chat发送了信息
-    socket.on('clientSendMsg', function(data) {
+    socket.on('CLIENT_SEND_MSG', function(data) {
         // 客户端发送了信息
         if (serverChatObj) {
-            serverChatObj.socket.emit('clientSendMsg', {
+            serverChatObj.socket.emit('CLIENT_SEND_MSG', {
                 clientChatId: data.clientChatId,
                 msg: data.msg
             });

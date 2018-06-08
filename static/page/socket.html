@@ -14,7 +14,7 @@
             socket.on('open', function() {
                 console.log('connected');
                 // 注册
-                socket.emit('serverOn', {
+                socket.emit('SERVER_ON', {
                     serverChatId: serverChatInfo.serverChatId,
                     serverChatName: serverChatInfo.serverChatName
                 });
@@ -31,7 +31,7 @@
             socket.on('connect', function() {});
             socket.on('event', function(data) {});
             socket.on('disconnect', function() {});
-            socket.emit('serverOn', {
+            socket.emit('SERVER_ON', {
                 type: 1,
                 data: {
                     a: 1,

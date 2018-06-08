@@ -4,8 +4,8 @@
         <div class="imClient-inner">
             <header class="imClient-header">
                 <div class="name-wrapper position-v-mid">
-                    <span v-if="chatInfoEn.chatState == 'robot'">您与机器人{{robotEn.robotName}}的对话</span>
-                    <span v-else-if="chatInfoEn.chatState == 'agent'">您与客服{{serverChatEn.serverChatName}}的对话</span>
+                    <span v-if="chatInfoEn.chatState == 'robot'">Vue在线客服-客户端</span>
+                    <span v-else-if="chatInfoEn.chatState == 'agent'">您正在与客服{{serverChatEn.serverChatName}}对话</span>
                 </div>
                 <div class="position-h-v-mid">
                     <img class="logo" src="image/geely_logo.png" />
@@ -18,7 +18,7 @@
                 <!-- 聊天框 -->
                 <div class="item imClientChat-wrapper">
                     <!-- 聊天记录 -->
-                    <common-chat ref="common_chat" :chatInfoEn="chatInfoEn" :oprRoleName="'client'" @sendMsg="sendMsg"></common-chat>
+                    <common-chat ref="common_chat" :chatInfoEn="chatInfoEn" :oprRoleName="'client'" @sendMsg="sendMsg" @chatCallback="chatCallback"></common-chat>
                 </div>
                 <!-- 信息区域 -->
                 <div class="item imClientInfo-wrapper">
@@ -47,29 +47,20 @@
                 </div>
             </main>
         </div>
-        <!-- 转人工dialog -->
-        <el-dialog title="请选择咨询内容" class="im-queueDialog" :visible.sync="im_queueDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false">
-            <div class="main">
-                <el-radio-group v-model="im_queueDialog_selectedItem" class="item-group" @change="queueDialog_changeItem">
-                    <div class="item" v-for="(item, index) in im_queueDialog_kfList" :key="index">
-                        <el-radio-button :label="item.queueId">{{item.queueName}}</el-radio-button>
-                    </div>
-                </el-radio-group>
-            </div>
-            <div class="footer">
-                <el-button type="primary" :disabled="im_queueDialog_selectedItem.length==0" @click="queueDialog_submit">开始咨询</el-button>
-            </div>
+        <!-- 转接客服dialog -->
+        <el-dialog :visible.sync="transferDialogVisible" :close-on-press-escape="false">
+            <im-transfer ref="im_Transfer" @submit="transferDialog_submit"></im-transfer>
         </el-dialog>
-        <!-- 满意度dialog-->
-        <el-dialog class="im-mydDialog" :visible.sync="rateDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false">
+        <!-- 满意度dialog -->
+        <el-dialog :visible.sync="rateDialogVisible" :close-on-press-escape="false">
             <im-rate></im-rate>
         </el-dialog>
-        <!-- 离线留言 -->
-        <el-dialog class="im-leaveDialog" :visible.sync="leaveDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false">
+        <!-- 离线留言dialog -->
+        <el-dialog :visible.sync="leaveDialogVisible" :close-on-press-escape="false">
             <im-leave></im-leave>
         </el-dialog>
-        <!-- 结束会话-->
-        <el-dialog class="im-logoutDialog" :visible.sync="im_logoutVisible" :close-on-click-modal="false" :close-on-press-escape="false">
+        <!-- 结束会话dialog -->
+        <el-dialog :visible.sync="logoutDialogVisible" :close-on-press-escape="false">
             <p class="title">结束本次会话？</p>
             <div class="footer">
                 <el-button type="primary" @click="logoutDialog_cancel">取消</el-button>
@@ -83,18 +74,20 @@
 import commonChat from '@/components/common/common_chat.vue';
 import imRate from './imRate.vue';
 import imLeave from './imLeave.vue';
+import imTransfer from './imTransfer.vue';
 
 export default {
     components: {
         commonChat: commonChat,
         imRate: imRate,
-        imLeave: imLeave
+        imLeave: imLeave,
+        imTransfer: imTransfer
     },
     data() {
         return {
             socket: null,
             chatInfoEn: {
-                chatState: 'robot', // chat状态；robot 机器人、agent 客服、agentOff 离线、agentTransiting 客服转接中
+                chatState: 'robot', // chat状态；robot 机器人、agent 客服
                 connectionState: 'on', // 连接状态;on ：在线；off：离线
                 lastMsgTime: null, // 上一次消息的创建时间
                 playSound: true,
@@ -130,12 +123,10 @@ export default {
             inputContent_setTimeout: null, // 输入文字时在输入结束才修改具体内容
             selectionRange: null, // 输入框选中的区域
             shortcutMsgList: [], // 聊天区域的快捷回复列表
-            im_queueDialogVisible: false, // 转人工队列dialog
-            im_queueDialog_kfList: [], // 转人工队列集合
-            im_queueDialog_selectedItem: '', // 选中的item对象
-            im_logoutVisible: false, // 结束会话显示
-            rateDialogVisible:false, // 评价dialog
-            leaveDialogVisible:false, // 留言dialog
+            logoutDialogVisible: false, // 结束会话显示
+            transferDialogVisible: false, // 转接人工dialog
+            rateDialogVisible: false, // 评价dialog
+            leaveDialogVisible: false // 留言dialog
         };
     },
     computed: {},
@@ -168,6 +159,13 @@ export default {
             var tmpId = this.$data.clientChatEn.clientChatId.toString();
             userName += tmpId.substr(tmpId.length - 6, 6);
             this.$data.clientChatEn.clientChatName = userName;
+
+            // 模拟消息
+            this.addChatMsg({
+                role: 'robot',
+                avatarUrl: this.$data.robotEn.avatarUrl,
+                contentType: 'transformServer'
+            });
         },
 
         /**
@@ -177,33 +175,49 @@ export default {
             var self = this;
             self.$data.socket = require('socket.io-client')('http://localhost:3001');
             self.$data.socket.on('connect', function() {
-                // 上线
-                self.$data.socket.emit('clientOn', {
-                    clientChatId: self.$data.clientChatEn.clientChatId,
-                    clientChatName: self.$data.clientChatEn.clientChatName
-                });
-
                 // 服务端链接成功
-                self.$data.socket.on('serverConnected', function(data) {
+                self.$data.socket.on('SERVER_CONNECTED', function(data) {
                     // 1)获取客服消息
-                    self.$data.serverChatEn.serverChatId = data.serverChatId;
-                    self.$data.serverChatEn.serverChatName = data.serverChatName;
+                    self.$data.serverChatEn = data.serverChatEn;
 
                     // 2)添加消息
                     self.addChatMsg({
                         role: 'sys',
                         contentType: 'text',
-                        content: '客服 ' + data.serverChatName + ' 为你服务'
+                        content: '客服 ' + data.serverChatEn.serverChatName + ' 为你服务'
                     });
                 });
 
-                //  接受服务端信息
-                self.$data.socket.on('serverSendMsg', function(data) {
+                // 接受服务端信息
+                self.$data.socket.on('SERVER_SEND_MSG', function(data) {
                     self.addChatMsg(data.msg, () => {
                         self.$refs.common_chat.goEnd();
                     });
                 });
+
+                // 离开
+                window.addEventListener('beforeunload', function() {
+                    if (self.$data.chatInfoEn.chatState == 'agent') {
+                        self.$data.socket.emit('CLIENT_OFF', {
+                            clientChatEn: self.$data.clientChatEn,
+                            serverChatEn: self.$data.serverChatEn
+                        });
+                    }
+                });
             });
+        },
+
+        /**
+         * 客户端上线
+         */
+        clientOn: function() {
+            console.log(1);
+            if (this.$data.chatInfoEn.chatState == 'robot') {
+                this.$data.socket.emit('CLIENT_ON', {
+                    clientChatEn: this.$data.clientChatEn,
+                    serverChatEn: this.$data.serverChatEn
+                });
+            }
         },
 
         /**
@@ -255,7 +269,7 @@ export default {
                 // 机器人发送接口
             } else if (this.$data.chatInfoEn.chatState == 'agent') {
                 // 客服接口
-                this.$data.socket.emit('clientSendMsg', {
+                this.$data.socket.emit('CLIENT_SEND_MSG', {
                     serverChatId: this.$data.serverChatEn.serverChatId,
                     clientChatId: this.$data.clientChatEn.clientChatId,
                     msg: msg
@@ -269,35 +283,27 @@ export default {
         },
 
         /**
-         * 显示队列Dialog
-         * @param {Number} robotMode 1:工作时间内，所有会话由人工客服先接待。
+         * 显示转接客服Dialog
          */
-        queueDialog_show: function(robotMode) {
-            this.$data.im_queueDialog_kfList = [{ queueId: '1', queueName: '咨询' }, { queueId: '2', queueName: '反馈' }];
-            this.$data.im_queueDialogVisible = true;
-            this.$data.im_queueDialog_selectedItem = [];
+        transferDialog_show: function() {
+            this.$data.transferDialogVisible = true;
+            this.$refs.transferDialog_show && this.$refs.transferDialog_show.init();
         },
 
         /**
-         * 队列dialog_选中
+         * 转接客服dialog_提交
          */
-        queueDialog_changeItem: function(e) {},
-
-        /**
-         * 队列dialog_提交
-         */
-        queueDialog_submit: function() {
-            this.$data.im_queueDialogVisible = false;
+        transferDialog_submit: function(rs) {
+            this.$data.transferDialogVisible = false;
             this.$data.chatInfoEn.chatState = 'agent';
             this.regSocket();
-            this.goEnd();
         },
 
         /**
          * 注销dialog_提交
          */
         logoutDialog_submit: function() {
-            this.$data.im_logoutVisible = false;
+            this.$data.logoutDialogVisible = false;
             this.addChatMsg({
                 role: 'sys',
                 content: '本次会话已结束'
@@ -308,7 +314,7 @@ export default {
          * 注销dialog_取消
          */
         logoutDialog_cancel: function() {
-            this.$data.im_logoutVisible = false;
+            this.$data.logoutDialogVisible = false;
         },
 
         /**
@@ -321,6 +327,15 @@ export default {
                     self.$refs.common_chat.scrollTop = self.$refs.common_chat.scrollHeight;
                 }, 100);
             });
+        },
+
+        /**
+         * chat回调
+         */
+        chatCallback: function(rs) {
+            if (rs.eventType == 'transformServer') {
+                this.transferDialog_show();
+            }
         }
     },
     mounted() {
@@ -379,6 +394,7 @@ export default {
         }
         & > .imClientChat-wrapper {
             width: 550px;
+            border-right: 1px solid #ccc;
         }
         & > .imClientInfo-wrapper {
             width: 300px;

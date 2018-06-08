@@ -4,7 +4,7 @@
         <!-- 头部 -->
         <header class="imChat-header">
             <div class="inner-wrapper">
-                <span class="name">{{storeSelectedChatEn.chatName}}</span>
+                <span class="name">{{storeSelectedChatEn.clientChatName}}</span>
             </div>
             <div class="opr-wrapper" v-show="storeSelectedChatEn.state=='on'">
                 <el-button type="text" @click="close()">结束会话</el-button>
@@ -50,7 +50,7 @@ export default {
         close: function() {
             // 发送关闭请求
             this.$store.imServerStore.dispatch('im_close', {
-                chatId: this.storeSelectedChatEn.chatId
+                clientChatId: this.storeSelectedChatEn.clientChatId
             });
         },
 
@@ -63,13 +63,13 @@ export default {
             msg.role = 'server';
             // 1.socket发送消息
             this.$store.imServerStore.dispatch('sendMsg', {
-                clientChatId: this.storeSelectedChatEn.chatId,
+                clientChatId: this.storeSelectedChatEn.clientChatId,
                 msg: msg
             });
 
             // 2.附加到此chat对象的msg集合里
             this.$store.imServerStore.dispatch('addChatMsg', {
-                chatId: this.storeSelectedChatEn.chatId,
+                clientChatId: this.storeSelectedChatEn.clientChatId,
                 msg: msg,
                 successCallback: function() {
                     rs.successCallbcak && rs.successCallbcak();
