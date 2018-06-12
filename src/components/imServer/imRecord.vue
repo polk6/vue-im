@@ -8,9 +8,9 @@
             </div>
             <div class="client-info-wrapper">
                 <p>
-                    <i class="fa fa-user on"></i>{{onlineChatCount}}</p>
+                    <i class="fa fa-user on-line"></i>{{onlineChatCount}}</p>
                 <p>
-                    <i class="fa fa-user off"></i>{{offlineChatCount}}</p>
+                    <i class="fa fa-user off-line"></i>{{offlineChatCount}}</p>
             </div>
         </header>
         <main class="main">
@@ -66,7 +66,7 @@ export default {
         }
     },
     watch: {
-        storeServerChatEn(value){
+        storeServerChatEn(value) {
             console.log(1);
         }
     },
@@ -143,10 +143,10 @@ export default {
             }
             .fa {
                 margin-right: 10px;
-                &.on {
+                &.on-line {
                     color: #70ed3a;
                 }
-                &.off {
+                &.off-line {
                     color: #bbbbbb;
                 }
             }

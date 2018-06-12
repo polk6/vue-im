@@ -7,9 +7,6 @@
                     <span v-if="chatInfoEn.chatState == 'robot'">Vue在线客服-客户端</span>
                     <span v-else-if="chatInfoEn.chatState == 'agent'">您正在与客服{{serverChatEn.serverChatName}}对话</span>
                 </div>
-                <div class="position-h-v-mid">
-                    <img class="logo" src="image/geely_logo.png" />
-                </div>
                 <div class="close-wrapper position-v-mid">
                     <i class="el-icon-close" @click="closeChat()"></i>
                 </div>
@@ -48,8 +45,8 @@
             </main>
         </div>
         <!-- 转接客服dialog -->
-        <el-dialog :visible.sync="transferDialogVisible" :close-on-press-escape="false">
-            <im-transfer ref="im_Transfer" @submit="transferDialog_submit"></im-transfer>
+        <el-dialog title="请选择客服" :visible.sync="transferDialogVisible" :close-on-press-escape="false">
+            <im-transfer ref="im_transfer" @submit="transferDialog_submit"></im-transfer>
         </el-dialog>
         <!-- 满意度dialog -->
         <el-dialog :visible.sync="rateDialogVisible" :close-on-press-escape="false">
@@ -110,14 +107,11 @@ export default {
                 avatarUrl: 'image/im_server_avatar.png'
             }, // 机器人信息
             faqList: [
-                { title: '如何更改于网上订购的机票？', content: '请联系对应的航空公司' },
-                {
-                    title: '如何预订“加长空间座位”？',
-                    content: '成功更改订票上的出发日期或时间后，网上系统会于一小时内签发电子机票并把电子票务收据发送到您在网上订票时所提供的电邮地址。'
-                },
-                { title: '我可享有多少寄舱行李限额？', content: '请联系对应的航空公司' },
-                { title: '我可携带多少手提行李？', content: '请联系对应的航空公司' },
-                { title: '要怎样才能申请退票？', content: '请联系对应的航空公司' }
+                { title: '今天周几', content: '今天周一' },
+                { title: '今天周几', content: '今天周二' },
+                { title: '今天周几', content: '今天周三' },
+                { title: '今天周几', content: '今天周四' },
+                { title: '今天周几', content: '今天周五' },
             ],
             faqSelected: '-1',
             inputContent_setTimeout: null, // 输入文字时在输入结束才修改具体内容
@@ -170,18 +164,24 @@ export default {
 
         /**
          * 注册socket
+         * @param {String} serverChatId 服务端chatId
          */
-        regSocket: function() {
-            var self = this;
-            self.$data.socket = require('socket.io-client')('http://localhost:3001');
-            self.$data.socket.on('connect', function() {
-                // 服务端链接成功
-                self.$data.socket.on('SERVER_CONNECTED', function(data) {
+        regSocket: function(serverChatId) {
+            this.$data.socket = require('socket.io-client')('http://localhost:3001');
+            this.$data.socket.on('connect', () => {
+                // 客户端上线
+                this.$data.socket.emit('CLIENT_ON', {
+                    clientChatEn: this.$data.clientChatEn,
+                    serverChatId: serverChatId
+                });
+
+                // 服务端链接
+                this.$data.socket.on('SERVER_CONNECTED', (data) => {
                     // 1)获取客服消息
-                    self.$data.serverChatEn = data.serverChatEn;
+                    this.$data.serverChatEn = data.serverChatEn;
 
                     // 2)添加消息
-                    self.addChatMsg({
+                    this.addChatMsg({
                         role: 'sys',
                         contentType: 'text',
                         content: '客服 ' + data.serverChatEn.serverChatName + ' 为你服务'
@@ -189,33 +189,28 @@ export default {
                 });
 
                 // 接受服务端信息
-                self.$data.socket.on('SERVER_SEND_MSG', function(data) {
-                    self.addChatMsg(data.msg, () => {
-                        self.$refs.common_chat.goEnd();
+                this.$data.socket.on('SERVER_SEND_MSG', (data) => {
+                    console.log(data);
+                    this.addChatMsg(data.msg, () => {
+                        this.$refs.common_chat.goEnd();
                     });
                 });
 
                 // 离开
-                window.addEventListener('beforeunload', function() {
-                    if (self.$data.chatInfoEn.chatState == 'agent') {
-                        self.$data.socket.emit('CLIENT_OFF', {
-                            clientChatEn: self.$data.clientChatEn,
-                            serverChatEn: self.$data.serverChatEn
-                        });
-                    }
+                window.addEventListener('beforeunload', () => {
+                    this.closeChat();
                 });
             });
         },
 
         /**
-         * 客户端上线
+         * 结束会话
          */
-        clientOn: function() {
-            console.log(1);
-            if (this.$data.chatInfoEn.chatState == 'robot') {
-                this.$data.socket.emit('CLIENT_ON', {
+        closeChat: function() {
+            if (this.$data.chatInfoEn.chatState == 'agent') {
+                this.$data.socket.emit('CLIENT_OFF', {
                     clientChatEn: this.$data.clientChatEn,
-                    serverChatEn: this.$data.serverChatEn
+                    serverChatId: this.$data.serverChatEn.serverChatId
                 });
             }
         },
@@ -230,6 +225,8 @@ export default {
          */
         addChatMsg: function(msg, successCallback) {
             // 1.设定默认值
+            msg.role = msg.role == undefined ? 'sys' : msg.role;
+            msg.contentType = msg.contentType == undefined ? 'text' : msg.contentType;
             msg.createTime = msg.createTime == undefined ? new Date() : msg.createTime;
 
             var msgList = this.$data.chatInfoEn.msgList ? this.$data.chatInfoEn.msgList : [];
@@ -260,9 +257,10 @@ export default {
 
         /**
          * 发送消息
-         * @param {Object} msg 消息对象
+         * @param {Object} rs 回调对象
          */
-        sendMsg: function(msg) {
+        sendMsg: function(rs) {
+            var msg = rs.msg;
             msg.role = 'client';
             msg.avatarUrl = this.$data.clientChatEn.avatarUrl;
             if (this.$data.chatInfoEn.chatState == 'robot') {
@@ -271,7 +269,7 @@ export default {
                 // 客服接口
                 this.$data.socket.emit('CLIENT_SEND_MSG', {
                     serverChatId: this.$data.serverChatEn.serverChatId,
-                    clientChatId: this.$data.clientChatEn.clientChatId,
+                    clientChatEn: this.$data.clientChatEn,
                     msg: msg
                 });
             }
@@ -287,7 +285,9 @@ export default {
          */
         transferDialog_show: function() {
             this.$data.transferDialogVisible = true;
-            this.$refs.transferDialog_show && this.$refs.transferDialog_show.init();
+            this.$nextTick(() => {
+                this.$refs.im_transfer.init();
+            });
         },
 
         /**
@@ -296,7 +296,8 @@ export default {
         transferDialog_submit: function(rs) {
             this.$data.transferDialogVisible = false;
             this.$data.chatInfoEn.chatState = 'agent';
-            this.regSocket();
+            this.regSocket(rs.serverChatId);
+            console.log(rs.serverChatId);
         },
 
         /**
@@ -321,12 +322,7 @@ export default {
          * 聊天记录滚动到底部
          */
         goEnd: function() {
-            var self = this;
-            this.$nextTick(function() {
-                setTimeout(function() {
-                    self.$refs.common_chat.scrollTop = self.$refs.common_chat.scrollHeight;
-                }, 100);
-            });
+            this.$refs.common_chat.goEnd();
         },
 
         /**
@@ -340,7 +336,6 @@ export default {
     },
     mounted() {
         this.regClientChatEn();
-        this.regSocket();
     }
 };
 </script>
@@ -399,6 +394,13 @@ export default {
         & > .imClientInfo-wrapper {
             width: 300px;
         }
+    }
+}
+
+// element-UI
+.imClient-wrapper {
+    .el-dialog {
+        width: 500px;
     }
 }
 

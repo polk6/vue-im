@@ -3,12 +3,10 @@
     <div class="imChat-wrapper">
         <!-- 头部 -->
         <header class="imChat-header">
-            <div class="inner-wrapper">
-                <span class="name">{{storeSelectedChatEn.clientChatName}}</span>
-            </div>
-            <div class="opr-wrapper" v-show="storeSelectedChatEn.state=='on'">
-                <el-button type="text" @click="close()">结束会话</el-button>
-            </div>
+            <span class="name">{{storeSelectedChatEn.clientChatName}}</span>
+            <span class="time">{{getAccessTimeStr(storeSelectedChatEn.accessTime)}}</span>
+            <span v-show="storeSelectedChatEn.state=='on' " class="on-line">在线</span>
+            <span v-show="storeSelectedChatEn.state=='off' " class="off-line ">离线</span>
         </header>
         <main class="imChat-main">
             <!-- 聊天框区域 -->
@@ -45,16 +43,6 @@ export default {
     },
     methods: {
         /**
-         * 结束
-         */
-        close: function() {
-            // 发送关闭请求
-            this.$store.imServerStore.dispatch('im_close', {
-                clientChatId: this.storeSelectedChatEn.clientChatId
-            });
-        },
-
-        /**
          * 发送消息
          * @param {Object} rs 回调对象
          */
@@ -79,6 +67,14 @@ export default {
 
         goEnd: function() {
             this.$refs.common_chat.goEnd();
+        },
+
+        /**
+         * 获取chat的访问时间
+         * @param {Date} accessTime 问时间
+         */
+        getAccessTimeStr: function(accessTime) {
+            return this.$ak.Utils.getDateTimeStr(accessTime, 'Y-m-d H:i:s');
         }
     },
     mounted() {}
@@ -87,29 +83,21 @@ export default {
 <style lang="less">
 .imChat-wrapper {
     .imChat-header {
+        display: flex;
+        align-items: center;
         width: 100%;
         height: 50px;
+        padding-left: 10px;
         border-bottom: 1px solid #e6e6e6;
-        font-size: 12px !important;
-        color: #3e3e3e;
-        .inner-wrapper {
-            width: 35%;
-            padding-left: 13px;
-            float: left;
-            text-align: left;
+        font-size: 16px;
+        span {
+            margin-right: 20px;
         }
-        .opr-wrapper {
-            width: 35%;
-            float: right;
-            text-align: right;
-            .el-button {
-                font-size: 12px;
-                padding: 0px;
-                margin-right: 14px;
-            }
-            .el-button:last-child {
-                margin-right: 15px;
-            }
+        .on-line {
+            color: #70ed3a;
+        }
+        .off-line {
+            color: #bbbbbb;
         }
     }
     .imChat-main {

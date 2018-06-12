@@ -32,10 +32,13 @@ export default {
         /**
          * 选中了会话
          */
-        selectedChat: function() {},
+        selectedChat: function() {}
     },
     mounted() {
-        this.$store.imServerStore.dispatch('regSocket');
+        this.$store.imServerStore.dispatch('SERVER_ON');
+    },
+    destroyed() {
+        this.$store.imServerStore.dispatch('SERVER_OFF');
     }
 };
 </script>

@@ -2,14 +2,14 @@
 <template>
     <div class="imTransfer-wrapper">
         <main class="main">
-            <el-radio-group v-model="selectedItem" class="item-group">
+            <el-radio-group v-model="selectedServerChatId" class="item-group">
                 <div class="item" v-for="(item, index) in kfList" :key="index">
-                    <el-radio-button :label="item.queueId">{{item.queueName}}</el-radio-button>
+                    <el-radio-button :label="item.serverChatId">{{item.serverChatName}}</el-radio-button>
                 </div>
             </el-radio-group>
         </main>
         <footer class="footer">
-            <el-button type="primary" :disabled="selectedItem.length==0" @click="submit">开始咨询</el-button>
+            <el-button type="primary" :disabled="selectedServerChatId == ''" @click="submit">开始咨询</el-button>
         </footer>
     </div>
 </template>
@@ -19,7 +19,7 @@ export default {
     data() {
         return {
             kfList: [], // 转人工队列集合
-            selectedItem: '' // 选中的item对象
+            selectedServerChatId: '' // 选中的serverChatId
         };
     },
     computed: {},
@@ -29,10 +29,13 @@ export default {
          * init
          */
         init: function() {
-            this.$nextTick(() => {
-                this.$data.kfList = [{ queueId: '1', queueName: '咨询' }, { queueId: '2', queueName: '反馈' }];
-                this.$data.selectedItem = [];
+            this.$http.get({
+                url: 'getIMServerList',
+                successCallback: (res) => {
+                    this.$data.kfList = res;
+                }
             });
+            this.$data.selectedServerChatId = '';
         },
 
         /**
@@ -40,7 +43,7 @@ export default {
          */
         submit: function() {
             this.$emit('submit', {
-                msg: this.$data.selectedItem
+                serverChatId: this.$data.selectedServerChatId
             });
         }
     },
@@ -50,5 +53,34 @@ export default {
 
 <style lang="less">
 .imTransfer-wrapper {
+    .main {
+        height: 200px;
+        border-bottom: 1px solid #ebeff3;
+        .item {
+            float: left;
+            text-align: center;
+            padding: 30px 21px 0px;
+            .el-radio-button__inner {
+                display: inline-block;
+                width: 121px;
+                font-size: 14px;
+                color: #3e3e3e;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                border-radius: 5px;
+                overflow: hidden;
+            }
+            .el-radio-button.is-active {
+                .el-radio-button__inner {
+                    color: #00a8d7;
+                    background-color: #fff;
+                }
+            }
+        }
+    }
+    .footer {
+        text-align: center;
+        padding: 14px 0px;
+    }
 }
 </style>

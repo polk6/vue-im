@@ -182,11 +182,10 @@ export default {
          */
         setInputContentByDiv: function() {
             var self = this;
-            // 去除非表情的html标签
             var htmlStr = document.getElementById('common_chat_input').innerHTML;
 
             // 1.转换表情为纯文本：<img textanme="[笑]"/> => [笑]
-            var tmpInputContent = htmlStr.replace(/<img.+?text=\"(.+?)\".?>/g, '[$1]').replace(/<.+?>/g, '');
+            var tmpInputContent = htmlStr.replace(/<img.+text=\"(.+?)\".+>/g, '[$1]').replace(/<.+?>/g, '');
 
             // 2.设置最长长度
             if (tmpInputContent.length > 500) {
@@ -911,8 +910,8 @@ export default {
                 text-align: right;
                 position: relative;
                 height: 0px;
-                .icon-IM-tupianguanbi {
-                    font-size: 42px;
+                .fa-remove {
+                    font-size: 32px;
                     color: white;
                     position: relative;
                     right: -50px;

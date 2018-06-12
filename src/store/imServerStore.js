@@ -22,24 +22,6 @@ export const imServerStore = new Vuex.Store({
     },
     mutations: {
         /**
-         * 添加客户端chat对象
-         * @param {Object} payload 载荷对象
-         * @param {String} payload.chatEn chat对象
-         */
-        addClientChat: function(state, { chatEn }) {
-            // 1.公共属性
-            chatEn.msgList = [];
-            chatEn.state = 'on';
-            chatEn.accessTime = new Date(); // 访问时间
-            chatEn.inputContent = ''; // 输入框内容
-            chatEn.newMsgCount = 0;
-            chatEn.isFollow = false; // 是否关注
-            chatEn.lastMsgTime = null;
-            chatEn.lastMsgShowTime = null; // 最后一个消息的显示时间
-            state.currentChatEnlist.push(chatEn);
-        },
-
-        /**
          * 触发当前选择的chat含有新的消息
          * @param {Object} payload 载荷对象
          */
@@ -95,10 +77,36 @@ export const imServerStore = new Vuex.Store({
     },
     actions: {
         /**
-         * 初始化
+         * 添加客户端chat对象
+         * @param {Object} payload 载荷对象
+         * @param {String} payload.newChatEn 新的chat对象
          */
-        init: function(context, payload) {},
+        addClientChat: function(context, { newChatEn }) {
+            context.dispatch('getChatEnByChatId', { clientChatId: newChatEn.clientChatId }).then((chatEn) => {
+                if (chatEn == null) {
+                    // 1)公共属性
+                    newChatEn.msgList = [];
+                    newChatEn.state = 'on';
+                    newChatEn.accessTime = new Date(); // 访问时间
+                    newChatEn.inputContent = ''; // 输入框内容
+                    newChatEn.newMsgCount = 0;
+                    newChatEn.isFollow = false; // 是否关注
+                    newChatEn.lastMsgTime = null;
+                    newChatEn.lastMsgShowTime = null; // 最后一个消息的显示时间
+                    context.state.currentChatEnlist.push(newChatEn);
+                }
 
+                // 2)增加消息
+                context.dispatch('addChatMsg', {
+                    clientChatId: newChatEn.clientChatId,
+                    msg: {
+                        role: 'sys',
+                        contentType: 'text',
+                        content: chatEn == null ? '新客户接入' : '重新连接'
+                    }
+                });
+            });
+        },
         /**
          * 根据jobId获取chat对象
          * @param {String} clientChatId 需要修改的chatEn的id，根据此id匹配当前集合或历史集合
@@ -369,42 +377,36 @@ export const imServerStore = new Vuex.Store({
         },
 
         /**
-         * 注册socket
+         * 服务端上线
          */
-        regSocket: function(context, payload) {
+        SERVER_ON: function(context, payload) {
             context.state.socket = require('socket.io-client')('http://localhost:3001');
             context.state.socket.on('connect', function() {
                 // 服务端上线
                 context.state.socket.emit('SERVER_ON', {
-                    serverChatId: context.state.serverChatEn.serverChatId,
-                    serverChatName: context.state.serverChatEn.serverChatName
+                    serverChatEn: {
+                        serverChatId: context.state.serverChatEn.serverChatId,
+                        serverChatName: context.state.serverChatEn.serverChatName
+                    }
                 });
 
                 // 客户端上线
                 context.state.socket.on('CLIENT_ON', function(data) {
                     // 1)增加客户列表
-                    context.commit('addClientChat', {
-                        chatEn: {
+                    context.dispatch('addClientChat', {
+                        newChatEn: {
                             clientChatId: data.clientChatEn.clientChatId,
                             clientChatName: data.clientChatEn.clientChatName
-                        }
-                    });
-                    // 2)增加消息
-                    context.dispatch('addChatMsg', {
-                        clientChatId: data.clientChatEn.clientChatId,
-                        msg: {
-                            role: 'sys',
-                            contentType: 'text',
-                            content: '新客户接入'
                         }
                     });
                 });
 
                 // 客户端离线
                 context.state.socket.on('CLIENT_OFF', function(data) {
+                    console.log(data);
                     // 1)修改客户状态为离线
                     context.dispatch('extendChatEn', {
-                        clientChatId: data.serverChatEn.clientChatId,
+                        clientChatId: data.clientChatEn.clientChatId,
                         extends: {
                             state: 'off'
                         }
@@ -424,17 +426,37 @@ export const imServerStore = new Vuex.Store({
                 // 客户端发送了信息
                 context.state.socket.on('CLIENT_SEND_MSG', function(data) {
                     context.dispatch('addChatMsg', {
-                        clientChatId: data.clientChatId,
+                        clientChatId: data.clientChatEn.clientChatId,
                         msg: data.msg
                     });
                 });
+
+                // 离开
+                window.addEventListener('beforeunload', () => {
+                    context.dispatch('SERVER_OFF');
+                });
             });
+        },
+
+        /**
+         * 服务端离线
+         */
+        SERVER_OFF: function(context, payload) {
+            context.state.socket.emit('SERVER_OFF', {
+                serverChatEn: {
+                    serverChatId: context.state.serverChatEn.serverChatId,
+                    serverChatName: context.state.serverChatEn.serverChatName
+                }
+            });
+            context.state.socket.close();
+            context.state.socket = null;
         },
 
         /**
          * 发送消息
          */
         sendMsg: function(context, { clientChatId, msg }) {
+            console.log(clientChatId);
             context.state.socket.emit('SERVER_SEND_MSG', {
                 clientChatId: clientChatId,
                 msg: msg
