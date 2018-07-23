@@ -20,7 +20,7 @@
         </div>
         <!-- 留言提交成功 -->
         <div v-show="resultVisible" class="submit-main">
-            <i class="iconfont icon-tijiaochenggong"></i>
+            <i class="fa fa-check-circle-o"></i>
             <p class="title">留 言 提 交 成 功</p>
             <p class="sub-title">我们会很快与您联系</p>
         </div>
@@ -29,12 +29,7 @@
 
 <script>
 export default {
-    props: {
-        chatInfoEn: {
-            required: true,
-            type: Object
-        }
-    },
+    props: {},
     data() {
         return {
             resultVisible: false, // 离线留言已提交
@@ -116,6 +111,8 @@ export default {
 
 <style lang="less">
 .imLeave-wrapper {
+    height: 370px;
+    padding: 0px 50px;
     .main {
         overflow: hidden;
         .title {
@@ -135,7 +132,7 @@ export default {
     }
     .submit-main {
         color: #000000;
-        .iconfont {
+        .fa {
             color: #6bcc00;
             font-size: 50px;
             margin: 85px auto 0px;

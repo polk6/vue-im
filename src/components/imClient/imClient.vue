@@ -4,32 +4,44 @@
         <div class="imClient-inner">
             <header class="imClient-header">
                 <div class="name-wrapper position-v-mid">
-                    <span v-if="chatInfoEn.chatState == 'robot'">Vue在线客服-客户端</span>
+                    <span v-if="chatInfoEn.chatState == 'robot'">Vue在线客服-访客端</span>
                     <span v-else-if="chatInfoEn.chatState == 'agent'">您正在与客服{{serverChatEn.serverChatName}}对话</span>
                 </div>
-                <div class="close-wrapper position-v-mid">
-                    <i class="el-icon-close" @click="closeChat()"></i>
+                <div class="opr-wrapper position-v-mid">
+                    <el-tooltip content="评分" placement="bottom" effect="light">
+                        <i class="fa fa-star-half-full" @click="showRateDialog()"></i>
+                    </el-tooltip>
+                    <el-tooltip content="留言" placement="bottom" effect="light">
+                        <i class="fa fa-envelope-o" @click="showLeaveDialog()"></i>
+                    </el-tooltip>
+                    <el-tooltip content="结束会话" placement="bottom" effect="light">
+                        <i class="fa fa-close" @click="closeChat()"></i>
+                    </el-tooltip>
                 </div>
             </header>
             <main class="imClient-main">
                 <!-- 聊天框 -->
                 <div class="item imClientChat-wrapper">
                     <!-- 聊天记录 -->
-                    <common-chat ref="common_chat" :chatInfoEn="chatInfoEn" :oprRoleName="'client'" @sendMsg="sendMsg" @chatCallback="chatCallback"></common-chat>
+                    <common-chat ref="common_chat" :chatInfoEn="chatInfoEn" :oprRoleName=" 'client'" @sendMsg="sendMsg" @chatCallback="chatCallback"></common-chat>
                 </div>
                 <!-- 信息区域 -->
                 <div class="item imClientInfo-wrapper">
-                    <article class="imClientInfo-item imClientInfo-notice-wrapper">
+                    <article class="imClientInfo-notice-wrapper">
                         <header class="imClientInfo-item-header">
                             公告
                         </header>
                         <main class="imClientInfo-notice-main">
-                            <p class="title">8.25 盲订开始了，快去下载App。</p>
-                            <img class="img" src="image/lynkco_ad.png" />
+                            <p class="link">github：
+                                <a href="https://github.com/polk6/vue-im" target="_blank">github.com/polk6/vue-im</a>
+                            </p>
+                            <p class="link">blog：
+                                <a href="https://www.cnblogs.com/polk6/p/vue-im.html" target="_blank">cnblogs.com/polk6/p/vue-im.html</a>
+                            </p>
                         </main>
                     </article>
                     <!-- 常见问题 -->
-                    <article class="imClientInfo-item imClientInfo-faq-wrapper">
+                    <article class="imClientInfo-faq-wrapper">
                         <header class="imClientInfo-item-header">
                             常见问题
                         </header>
@@ -50,11 +62,11 @@
         </el-dialog>
         <!-- 满意度dialog -->
         <el-dialog :visible.sync="rateDialogVisible" :close-on-press-escape="false">
-            <im-rate></im-rate>
+            <im-rate ref="im_rate"></im-rate>
         </el-dialog>
         <!-- 离线留言dialog -->
         <el-dialog :visible.sync="leaveDialogVisible" :close-on-press-escape="false">
-            <im-leave></im-leave>
+            <im-leave ref="im_leave"></im-leave>
         </el-dialog>
         <!-- 结束会话dialog -->
         <el-dialog :visible.sync="logoutDialogVisible" :close-on-press-escape="false">
@@ -85,18 +97,15 @@ export default {
             socket: null,
             chatInfoEn: {
                 chatState: 'robot', // chat状态；robot 机器人、agent 客服
-                connectionState: 'on', // 连接状态;on ：在线；off：离线
-                lastMsgTime: null, // 上一次消息的创建时间
-                playSound: true,
-                inputContent: '',
-                msgList: [],
-                state: 'on',
+                inputContent: '', // 输入框内容
+                msgList: [], // 消息列表
+                state: 'on', // 连接状态;on ：在线；off：离线
                 lastMsgShowTime: null // 最后一个消息的显示时间
             }, // 会话信息，包括聊天记录、状态
             clientChatEn: {
                 clientChatId: '',
                 clientChatName: '',
-                avatarUrl: 'image/im_client_avatar.png'
+                avatarUrl: 'static/image/im_client_avatar.png'
             }, // 当前账号的信息
             serverChatEn: {
                 serverChatName: '',
@@ -104,14 +113,14 @@ export default {
             }, // 服务端chat信息
             robotEn: {
                 robotName: '小旺',
-                avatarUrl: 'image/im_server_avatar.png'
+                avatarUrl: 'static/image/im_robot_avatar.png'
             }, // 机器人信息
             faqList: [
                 { title: '今天周几', content: '今天周一' },
                 { title: '今天周几', content: '今天周二' },
                 { title: '今天周几', content: '今天周三' },
                 { title: '今天周几', content: '今天周四' },
-                { title: '今天周几', content: '今天周五' },
+                { title: '今天周几', content: '今天周五' }
             ],
             faqSelected: '-1',
             inputContent_setTimeout: null, // 输入文字时在输入结束才修改具体内容
@@ -190,7 +199,7 @@ export default {
 
                 // 接受服务端信息
                 this.$data.socket.on('SERVER_SEND_MSG', (data) => {
-                    console.log(data);
+                    data.msg.avatarUrl = this.$data.serverChatEn.avatarUrl;
                     this.addChatMsg(data.msg, () => {
                         this.$refs.common_chat.goEnd();
                     });
@@ -212,6 +221,8 @@ export default {
                     clientChatEn: this.$data.clientChatEn,
                     serverChatId: this.$data.serverChatEn.serverChatId
                 });
+                this.$data.socket.close();
+                this.$data.chatInfoEn.state = 'off';
             }
         },
 
@@ -332,6 +343,24 @@ export default {
             if (rs.eventType == 'transformServer') {
                 this.transferDialog_show();
             }
+        },
+        /**
+         * 显示评分dialog
+         */
+        showRateDialog: function() {
+            this.$data.rateDialogVisible = true;
+            this.$nextTick(() => {
+                this.$refs.im_rate.init();
+            });
+        },
+        /**
+         * 显示留言dialog
+         */
+        showLeaveDialog: function() {
+            this.$data.leaveDialogVisible = true;
+            this.$nextTick(() => {
+                this.$refs.im_leave.init();
+            });
         }
     },
     mounted() {
@@ -367,10 +396,13 @@ export default {
             height: 45px;
             width: auto;
         }
-        .close-wrapper {
+        .opr-wrapper {
             right: 20px;
             font-size: 16px;
             cursor: pointer;
+            .fa {
+                margin-left: 10px;
+            }
         }
     }
     .imClient-main {
@@ -397,44 +429,35 @@ export default {
     }
 }
 
-// element-UI
-.imClient-wrapper {
-    .el-dialog {
-        width: 500px;
-    }
-}
-
 // 信息区域
 .imClientInfo-wrapper {
     width: 100%;
     height: 100%;
     background: #ffffff;
-    .imClientInfo-item {
+    .imClientInfo-notice-wrapper,
+    .imClientInfo-faq-wrapper {
         .imClientInfo-item-header {
             font-weight: bolder;
             font-size: 16px;
             color: #1072b5;
-            padding: 10px 15px;
-            border-bottom: 1px solid #ccc;
+            padding: 10px 15px 0;
         }
     }
     .imClientInfo-notice-wrapper {
         .imClientInfo-notice-main {
-            padding: 10px 15px 0px;
-            & > .title {
+            padding: 0 15px;
+            & > .link {
+                margin: 10px 0;
                 font-size: 12px;
                 color: #000000;
-            }
-            & > .img {
-                width: 265px;
-                height: 120px;
-                margin-top: 10px;
             }
         }
     }
     .imClientInfo-faq-wrapper {
+        height: 380px;
+        border-top: 1px solid #ccc;
         .imClientInfo-faq-main {
-            height: 260px;
+            height: 100%;
             overflow-y: auto;
             overflow-x: hidden;
             .el-collapse {
@@ -464,5 +487,12 @@ export default {
             }
         }
     }
+}
+
+// element-UI
+.el-dialog {
+    width: 500px;
+    background: #ffffff;
+    color: #000000;
 }
 </style>

@@ -17,6 +17,10 @@
                             <!-- 客户、客服 -->
                             <div v-else class="item" :class="{ sender: item.role == oprRoleName, receiver: item.role != oprRoleName }">
                                 <div class="info-wrapper" :class="item.state">
+                                    <!-- 头像 -->
+                                    <div class="avatar-wrapper">
+                                        <img class="kf-img" :src="item.avatarUrl">
+                                    </div>
                                     <!-- 1)文本类型 -->
                                     <div v-if="item.contentType=='text'" class="item-content common_chat_emoji-wrapper-global">
                                         <p class="text" v-html="getqqemojiEmoji(item.content)"></p>
@@ -562,8 +566,12 @@ export default {
                     .sender {
                         margin-top: 18px;
                         font-size: 12px;
-                        .headericon-wrapper {
+                        .avatar-wrapper {
                             float: left;
+                            .kf-img {
+                                width: 40px;
+                                height: 40px;
+                            }
                         }
                         .info-wrapper {
                             position: relative;
@@ -572,7 +580,6 @@ export default {
                             .item-content {
                                 position: relative;
                                 max-width: 330px;
-                                margin-top: 10px;
                                 color: #3e3e3e;
                                 font-size: 13px;
                                 border-radius: 3px;
@@ -732,7 +739,7 @@ export default {
                     }
                     .item.receiver {
                         margin-left: 5px;
-                        .headericon-wrapper {
+                        .avatar-wrapper {
                             margin-right: 15px;
                         }
                         .info-wrapper {
@@ -749,7 +756,7 @@ export default {
                                     height: 0px;
                                     content: '';
                                     border-top: 0px;
-                                    border-right: 10px solid #f9fbfc;
+                                    border-right: 10px solid #ccc;
                                     border-bottom: 5px solid transparent;
                                     border-left: 0px;
                                 }
@@ -758,7 +765,7 @@ export default {
                     }
                     .item.sender {
                         margin-right: 5px;
-                        .headericon-wrapper {
+                        .avatar-wrapper {
                             float: right;
                             margin-left: 15px;
                         }

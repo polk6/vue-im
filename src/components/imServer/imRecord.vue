@@ -8,9 +8,7 @@
             </div>
             <div class="client-info-wrapper">
                 <p>
-                    <i class="fa fa-user on-line"></i>{{onlineChatCount}}</p>
-                <p>
-                    <i class="fa fa-user off-line"></i>{{offlineChatCount}}</p>
+                    <i class="fa fa-user on-line"></i>{{storeCurrentChatEnlist.length}}</p>
             </div>
         </header>
         <main class="main">
@@ -48,10 +46,7 @@
 <script>
 export default {
     data() {
-        return {
-            onlineChatCount: 0,
-            offlineChatCount: 0
-        };
+        return {};
     },
     computed: {
         selectedChatEn() {
@@ -65,11 +60,7 @@ export default {
             return this.$store.imServerStore.getters.serverChatEn;
         }
     },
-    watch: {
-        storeServerChatEn(value) {
-            console.log(1);
-        }
-    },
+    watch: {},
     methods: {
         /**
          * 选中当前列表的chat
@@ -143,12 +134,6 @@ export default {
             }
             .fa {
                 margin-right: 10px;
-                &.on-line {
-                    color: #70ed3a;
-                }
-                &.off-line {
-                    color: #bbbbbb;
-                }
             }
         }
     }
@@ -186,20 +171,20 @@ export default {
                         font-size: 12px;
                         color: #eaf4fb;
                         &.active {
-                            color: #f9ce1d;
                             display: initial;
+                            color: #f9ce1d;
                         }
                     }
                 }
                 .platicon-wrapper {
-                    float: left;
                     position: relative;
+                    float: left;
                     width: 50px;
                     height: 100%;
                     .header-img {
                         padding: 10px;
-                        color: #fff;
                         font-size: 16px;
+                        color: #fff;
                         border-radius: 50%;
                         &.bg0 {
                             background-color: #ef7777;
@@ -219,30 +204,30 @@ export default {
                     }
                 }
                 .info-wrapper {
+                    position: relative;
                     float: left;
                     width: 185px;
-                    position: relative;
-                    padding-left: 5px;
                     padding-top: 5px;
+                    padding-left: 5px;
                     .first-p {
                         clear: both;
                         padding-top: 11px;
                         .name {
-                            width: 50%;
-                            color: #3e3e3e;
                             display: inline-block;
+                            float: left;
+                            width: 50%;
+                            font-size: 14px;
+                            color: #3e3e3e;
                             white-space: nowrap;
                             text-overflow: ellipsis;
                             overflow: hidden;
-                            font-size: 14px;
-                            float: left;
                             text-align: left;
                             font-weight: bolder;
                         }
                         .lastMsgTime {
                             float: right;
-                            color: #8d8d8d;
                             font-size: 12px;
+                            color: #8d8d8d;
                         }
                     }
                     .second-p {
@@ -250,18 +235,19 @@ export default {
                         padding-top: 5px;
                         line-height: 1.2;
                         .lastMsgContent {
-                            width: 150px;
-                            color: #8d8d8d;
                             display: inline-block;
+                            width: 150px;
+                            margin-top: 3px;
+                            font-size: 12px;
+                            color: #8d8d8d;
                             white-space: nowrap;
                             text-overflow: ellipsis;
-                            overflow: hidden;
-                            font-size: 12px;
-                            float: left;
                             text-align: left;
-                            margin-top: 3px;
+                            overflow: hidden;
                         }
                         .newMsgCount {
+                            position: relative;
+                            top: -3px;
                             float: right;
                             .el-badge__content {
                                 border: 1px solid #ffffff00;

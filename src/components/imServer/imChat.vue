@@ -31,6 +31,9 @@ export default {
         },
         storeHaveNewMsgDelegate() {
             return this.$store.imServerStore.getters.haveNewMsgDelegate;
+        },
+        storeServerChatEn() {
+            return this.$store.imServerStore.getters.serverChatEn;
         }
     },
     watch: {
@@ -49,6 +52,7 @@ export default {
         sendMsg: function(rs) {
             var msg = rs.msg;
             msg.role = 'server';
+            msg.avatarUrl = this.storeServerChatEn.avatarUrl;
             // 1.socket发送消息
             this.$store.imServerStore.dispatch('sendMsg', {
                 clientChatId: this.storeSelectedChatEn.clientChatId,

@@ -77,7 +77,7 @@ export const imServerStore = new Vuex.Store({
     },
     actions: {
         /**
-         * 添加客户端chat对象
+         * 添加访客端chat对象
          * @param {Object} payload 载荷对象
          * @param {String} payload.newChatEn 新的chat对象
          */
@@ -386,11 +386,12 @@ export const imServerStore = new Vuex.Store({
                 context.state.socket.emit('SERVER_ON', {
                     serverChatEn: {
                         serverChatId: context.state.serverChatEn.serverChatId,
-                        serverChatName: context.state.serverChatEn.serverChatName
+                        serverChatName: context.state.serverChatEn.serverChatName,
+                        avatarUrl:context.state.serverChatEn.avatarUrl
                     }
                 });
 
-                // 客户端上线
+                // 访客端上线
                 context.state.socket.on('CLIENT_ON', function(data) {
                     // 1)增加客户列表
                     context.dispatch('addClientChat', {
@@ -401,9 +402,8 @@ export const imServerStore = new Vuex.Store({
                     });
                 });
 
-                // 客户端离线
+                // 访客端离线
                 context.state.socket.on('CLIENT_OFF', function(data) {
-                    console.log(data);
                     // 1)修改客户状态为离线
                     context.dispatch('extendChatEn', {
                         clientChatId: data.clientChatEn.clientChatId,
@@ -423,7 +423,7 @@ export const imServerStore = new Vuex.Store({
                     });
                 });
 
-                // 客户端发送了信息
+                // 访客端发送了信息
                 context.state.socket.on('CLIENT_SEND_MSG', function(data) {
                     context.dispatch('addChatMsg', {
                         clientChatId: data.clientChatEn.clientChatId,
