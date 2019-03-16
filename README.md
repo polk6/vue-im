@@ -1,5 +1,11 @@
 # vue-im
-一个基于Vue2.0的在线客服系统。
+一个基于Vue2.0的在线客服系统。包括服务端和客户端。
+
+## im-server im服务端
+![image](https://user-images.githubusercontent.com/3334204/54471439-e1a7b400-47f3-11e9-8a97-819ef99a0fb5.png)
+
+## im-client im客户端
+![image](https://user-images.githubusercontent.com/3334204/54471440-e704fe80-47f3-11e9-9454-96a2fb27b122.png)
 
 ## Usage
 ```
