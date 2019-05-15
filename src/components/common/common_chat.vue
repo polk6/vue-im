@@ -27,7 +27,7 @@
                                     </div>
                                     <!-- 2)图片类型 -->
                                     <div v-else-if="item.contentType=='image'" class="item-content">
-                                        <img class="img" :src="item.fileUrl" @click="imgViewDialog_show(item)" />
+                                        <img class="img" :src="item.fileUrl" @click="imgViewDialog_show(item)">
                                     </div>
                                     <!-- 3)文件类型 -->
                                     <div v-else-if="item.contentType=='file'" class="item-content">
@@ -37,7 +37,7 @@
                                                 <p class="file-name">{{getFileName(item.fileName)}}</p>
                                                 <div class="file-opr">
                                                     <div v-show="item.state=='success'">
-                                                        <a class="file-download" :href="item.fileUrl" target='_blank' :download="item.fileUrl">下载</a>
+                                                        <a class="file-download" :href="item.fileUrl" target="_blank" :download="item.fileUrl">下载</a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -71,7 +71,17 @@
                     </div>
                     <!-- 聊天输入框 -->
                     <div class="input-wrapper">
-                        <div maxlength="500" class="inputContent common_chat_emoji-wrapper-global" id="common_chat_input" contenteditable="true" @paste.stop="inputContent_paste" @drop="inputContent_drop" @keydown="inputContent_keydown" @mouseup="inputContent_mouseup" @mouseleave="inputContent_mouseup"></div>
+                        <div
+                            maxlength="500"
+                            class="inputContent common_chat_emoji-wrapper-global"
+                            id="common_chat_input"
+                            contenteditable="true"
+                            @paste.stop="inputContent_paste"
+                            @drop="inputContent_drop"
+                            @keydown="inputContent_keydown"
+                            @mouseup="inputContent_mouseup"
+                            @mouseleave="inputContent_mouseup"
+                        ></div>
                     </div>
                     <!-- 发送按钮 -->
                     <el-button type="primary" size="small" class="send-btn" :class="chatInfoEn.state" @click="sendText()" :disabled="chatInfoEn.inputContent.length==0">发送</el-button>
@@ -83,16 +93,15 @@
             </div>
         </div>
         <!-- 图片查看dialog -->
-        <el-dialog title="" :visible.sync="imgViewDialogVisible" class="imgView-dialog" :modal="false">
+        <el-dialog title :visible.sync="imgViewDialogVisible" class="imgView-dialog" :modal="false">
             <div class="header">
-                <i class="iconfont fa fa-remove " @click="imgViewDialog_close"></i>
+                <i class="iconfont fa fa-remove" @click="imgViewDialog_close"></i>
             </div>
             <div class="main">
-                <img class="img" :src="imgViewDialog_imgSrc" />
+                <img class="img" :src="imgViewDialog_imgSrc">
             </div>
         </el-dialog>
     </div>
-
 </template>
 
 <script>
@@ -224,23 +233,33 @@ export default {
             // 2.表情转换为img
             value = this.getqqemojiEmoji(value);
 
-            // 3.填充内容
-            var sel, range;
+            // 3.聊天框中是否选中了文本，若选中文本将被替换成输入内容
             if (window.getSelection) {
+                var sel, range;
                 // IE9 and non-IE
                 sel = window.getSelection();
                 if (sel.getRangeAt && sel.rangeCount) {
-                    range = sel.getRangeAt(0);
-                    range.deleteContents();
+                    // 1)删除选中的文本(内容)
+                    range = sel.getRangeAt(0); // 获取鼠标选中的文本区域
+                    range.deleteContents(); // 删除选中的文本
 
+                    // 2)创建以输入内容为内容的DocumentFragment
                     var elemnet;
-                    if (range.createContextualFragment) elemnet = range.createContextualFragment(value);
-                    else {
-                        var o = document.createElement('div');
-                        o.innerHTML = value;
+                    if (range.createContextualFragment) {
+                        elemnet = range.createContextualFragment(value);
+                    } else {
+                        // 以下代码等同createContextualFragment
+                        // 创建一个DocumentFragment
                         elemnet = document.createDocumentFragment();
-                        for (var r, c; (r = o.firstChild); ) c = elemnet.appendChild(r);
+
+                        var divEl = document.createElement('div');
+                        divEl.innerHTML = value;
+                        // divEl下的元素，依次插入到DocumentFragment
+                        for (let i = 0, len = divEl.children.length; i < len; i++) {
+                            elemnet.appendChild(divEl.firstChild);
+                        }
                     }
+                    // 3)选中文本的位置替换为新输入的内容，并把光标定位到新内容后方
                     var lastNode = elemnet.lastChild;
                     range.insertNode(elemnet);
                     range.setStartAfter(lastNode);
@@ -275,11 +294,7 @@ export default {
         setInputContentSelectRange: function() {
             if (window.getSelection && window.getSelection().rangeCount > 0) {
                 var selectRange = window.getSelection().getRangeAt(0);
-                if (
-                    selectRange.commonAncestorContainer.nodeName == '#text' &&
-                    selectRange.commonAncestorContainer.parentElement &&
-                    selectRange.commonAncestorContainer.parentElement.id == 'common_chat_input'
-                ) {
+                if (selectRange.commonAncestorContainer.nodeName == '#text' && selectRange.commonAncestorContainer.parentElement && selectRange.commonAncestorContainer.parentElement.id == 'common_chat_input') {
                     // 选中了输入框内的文本
                     this.$data.selectionRange = selectRange;
                 } else if (selectRange.commonAncestorContainer.id == 'common_chat_input') {
@@ -503,7 +518,11 @@ export default {
             });
         }
     },
-    mounted() {}
+    mounted() {
+        this.$nextTick(function() {
+            this.init();
+        });
+    }
 };
 </script>
 <style lang="less">
