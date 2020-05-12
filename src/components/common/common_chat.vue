@@ -15,19 +15,26 @@
                                 </div>
                             </div>
                             <!-- 客户、客服 -->
-                            <div v-else class="item" :class="{ sender: item.role == oprRoleName, receiver: item.role != oprRoleName }">
+                            <div
+                                v-else
+                                class="item"
+                                :class="{ sender: item.role == oprRoleName, receiver: item.role != oprRoleName }"
+                            >
                                 <div class="info-wrapper" :class="item.state">
                                     <!-- 头像 -->
                                     <div class="avatar-wrapper">
-                                        <img class="kf-img" :src="item.avatarUrl">
+                                        <img class="kf-img" :src="item.avatarUrl" />
                                     </div>
                                     <!-- 1)文本类型 -->
-                                    <div v-if="item.contentType=='text'" class="item-content common_chat_emoji-wrapper-global">
+                                    <div
+                                        v-if="item.contentType=='text'"
+                                        class="item-content common_chat_emoji-wrapper-global"
+                                    >
                                         <p class="text" v-html="getqqemojiEmoji(item.content)"></p>
                                     </div>
                                     <!-- 2)图片类型 -->
                                     <div v-else-if="item.contentType=='image'" class="item-content">
-                                        <img class="img" :src="item.fileUrl" @click="imgViewDialog_show(item)">
+                                        <img class="img" :src="item.fileUrl" @click="imgViewDialog_show(item)" />
                                     </div>
                                     <!-- 3)文件类型 -->
                                     <div v-else-if="item.contentType=='file'" class="item-content">
@@ -37,14 +44,22 @@
                                                 <p class="file-name">{{getFileName(item.fileName)}}</p>
                                                 <div class="file-opr">
                                                     <div v-show="item.state=='success'">
-                                                        <a class="file-download" :href="item.fileUrl" target="_blank" :download="item.fileUrl">下载</a>
+                                                        <a
+                                                            class="file-download"
+                                                            :href="item.fileUrl"
+                                                            target="_blank"
+                                                            :download="item.fileUrl"
+                                                        >下载</a>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                     <!-- 4)文本类型 -->
-                                    <div v-if="item.contentType=='transformServer'" class="item-content common_chat_emoji-wrapper-global">
+                                    <div
+                                        v-if="item.contentType=='transformServer'"
+                                        class="item-content common_chat_emoji-wrapper-global"
+                                    >
                                         <p class="text">
                                             当前没有配置机器人，
                                             <el-button type="text" @click="chatCallback('transformServer')">转接客服</el-button>
@@ -66,7 +81,12 @@
                             <i class="iconfont fa fa-file-o"></i>
                         </a>
                         <form method="post" enctype="multipart/form-data">
-                            <input type="file" name="uploadFile" id="common_chat_opr_fileUpload" style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;">
+                            <input
+                                type="file"
+                                name="uploadFile"
+                                id="common_chat_opr_fileUpload"
+                                style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;"
+                            />
                         </form>
                     </div>
                     <!-- 聊天输入框 -->
@@ -84,7 +104,14 @@
                         ></div>
                     </div>
                     <!-- 发送按钮 -->
-                    <el-button type="primary" size="small" class="send-btn" :class="chatInfoEn.state" @click="sendText()" :disabled="chatInfoEn.inputContent.length==0">发送</el-button>
+                    <el-button
+                        type="primary"
+                        size="small"
+                        class="send-btn"
+                        :class="chatInfoEn.state"
+                        @click="sendText()"
+                        :disabled="chatInfoEn.inputContent.length==0"
+                    >发送</el-button>
                 </div>
                 <!-- 离线 -->
                 <div v-show="chatInfoEn.state=='off' || chatInfoEn.state=='end'" class="off-wrapper">
@@ -98,7 +125,7 @@
                 <i class="iconfont fa fa-remove" @click="imgViewDialog_close"></i>
             </div>
             <div class="main">
-                <img class="img" :src="imgViewDialog_imgSrc">
+                <img class="img" :src="imgViewDialog_imgSrc" />
             </div>
         </el-dialog>
     </div>
@@ -294,7 +321,11 @@ export default {
         setInputContentSelectRange: function() {
             if (window.getSelection && window.getSelection().rangeCount > 0) {
                 var selectRange = window.getSelection().getRangeAt(0);
-                if (selectRange.commonAncestorContainer.nodeName == '#text' && selectRange.commonAncestorContainer.parentElement && selectRange.commonAncestorContainer.parentElement.id == 'common_chat_input') {
+                if (
+                    selectRange.commonAncestorContainer.nodeName == '#text' &&
+                    selectRange.commonAncestorContainer.parentElement &&
+                    selectRange.commonAncestorContainer.parentElement.id == 'common_chat_input'
+                ) {
                     // 选中了输入框内的文本
                     this.$data.selectionRange = selectRange;
                 } else if (selectRange.commonAncestorContainer.id == 'common_chat_input') {
@@ -315,21 +346,17 @@ export default {
          * 输入框的keydown
          */
         inputContent_keydown: function(e) {
-            // 1.快捷键判断
-            if (e.keyCode == 13) {
-                // 回车直接发送
-                this.sendText();
-                e.returnValue = false;
-                return;
-            }
-
-            this.setInputContentSelectRange();
-            var self = this;
             // keyup触发时，绑定的数据还没有被变更，需要进行延后访问
+            this.setInputContentSelectRange();
             clearTimeout(this.$data.inputContent_setTimeout);
-            this.$data.inputContent_setTimeout = setTimeout(function() {
-                self.setInputContentByDiv();
-            }, 200);
+            this.$data.inputContent_setTimeout = setTimeout(() => {
+                this.setInputContentByDiv();
+
+                // 若按了回车，直接发送
+                if (e.keyCode == 13) {
+                    this.sendText();
+                }
+            }, 1);
         },
 
         /**
