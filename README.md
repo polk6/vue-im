@@ -1,6 +1,12 @@
 # vue-im
 一个基于Vue2.0的在线客服系统。包括服务端和客户端。
 
+# Features
+* 支持1客服对多用户
+* 支持客户选择客服
+* 输入框支持文本、图片、表情、文件传输
+* 输入框支持粘贴图片、文本表情混合
+
 ## im-server im服务端
 ![image](https://user-images.githubusercontent.com/3334204/54471439-e1a7b400-47f3-11e9-8a97-819ef99a0fb5.png)
 
