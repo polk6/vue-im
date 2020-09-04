@@ -395,8 +395,6 @@ export default {
 
                 // 2.非图片，粘贴纯文本
                 if (!isImage) {
-                    e.stopPropagation();
-                    e.preventDefault();
                     var str = e.clipboardData.getData('text/plain');
                     // 转化为纯文字
                     var span = document.createElement('span');
@@ -411,6 +409,8 @@ export default {
                     );
                 }
             }
+            e.stopPropagation();
+            e.preventDefault();
         },
 
         /**

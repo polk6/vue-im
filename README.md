@@ -19,6 +19,8 @@ npm install .
 
 npm run dev
 ```
+## Express-server
+./build/webpack.dev.conf.js 内置了一个Express服务，后台接口都在此处
 
 ## Blog
 [https://www.cnblogs.com/polk6/p/vue-im.html](https://www.cnblogs.com/polk6/p/vue-im.html)
@@ -27,5 +29,4 @@ npm run dev
 目前只适配了Chrome浏览器
 
 ## LICENSE
-
 [MIT](https://zh.wikipedia.org/wiki/MIT%E8%A8%B1%E5%8F%AF%E8%AD%89)	
