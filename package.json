@@ -31,7 +31,7 @@
         "css-loader": "^0.28.10",
         "element-ui": "^2.2.1",
         "express": "^4.16.2",
-        "express-fileupload": "^0.4.0",
+        "express-fileupload": "^1.1.9",
         "extract-text-webpack-plugin": "^3.0.0",
         "file-loader": "^1.1.11",
         "font-awesome": "^4.7.0",
