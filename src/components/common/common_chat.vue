@@ -3,7 +3,7 @@
     <div class="common_chat-wrapper">
         <div class="common_chat-inner">
             <!-- 聊天记录 -->
-            <div class="common_chat-main" id="common_chat_main" ref="common_chat_main">
+            <div v-if="chatLoaded" class="common_chat-main" id="common_chat_main" ref="common_chat_main">
                 <div class="common_chat-main-content">
                     <div class="inner">
                         <div v-for="(item ,index) in chatInfoEn.msgList" :key="index">
@@ -15,21 +15,14 @@
                                 </div>
                             </div>
                             <!-- 客户、客服 -->
-                            <div
-                                v-else
-                                class="item"
-                                :class="{ sender: item.role == oprRoleName, receiver: item.role != oprRoleName }"
-                            >
+                            <div v-else class="item" :class="{ sender: item.role == oprRoleName, receiver: item.role != oprRoleName }">
                                 <div class="info-wrapper" :class="item.state">
                                     <!-- 头像 -->
                                     <div class="avatar-wrapper">
                                         <img class="kf-img" :src="item.avatarUrl" />
                                     </div>
                                     <!-- 1)文本类型 -->
-                                    <div
-                                        v-if="item.contentType=='text'"
-                                        class="item-content common_chat_emoji-wrapper-global"
-                                    >
+                                    <div v-if="item.contentType=='text'" class="item-content common_chat_emoji-wrapper-global">
                                         <p class="text" v-html="getqqemojiEmoji(item.content)"></p>
                                     </div>
                                     <!-- 2)图片类型 -->
@@ -44,22 +37,14 @@
                                                 <p class="file-name">{{getFileName(item.fileName)}}</p>
                                                 <div class="file-opr">
                                                     <div v-show="item.state=='success'">
-                                                        <a
-                                                            class="file-download"
-                                                            :href="item.fileUrl"
-                                                            target="_blank"
-                                                            :download="item.fileUrl"
-                                                        >下载</a>
+                                                        <a class="file-download" :href="item.fileUrl" target="_blank" :download="item.fileUrl">下载</a>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                     <!-- 4)文本类型 -->
-                                    <div
-                                        v-if="item.contentType=='transformServer'"
-                                        class="item-content common_chat_emoji-wrapper-global"
-                                    >
+                                    <div v-if="item.contentType=='transformServer'" class="item-content common_chat_emoji-wrapper-global">
                                         <p class="text">
                                             当前没有配置机器人，
                                             <el-button type="text" @click="chatCallback('transformServer')">转接客服</el-button>
@@ -81,12 +66,7 @@
                             <i class="iconfont fa fa-file-o"></i>
                         </a>
                         <form method="post" enctype="multipart/form-data">
-                            <input
-                                type="file"
-                                name="uploadFile"
-                                id="common_chat_opr_fileUpload"
-                                style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;"
-                            />
+                            <input type="file" name="uploadFile" id="common_chat_opr_fileUpload" style="display:none;position:absolute;left:0;top:0;width:0%;height:0%;opacity:0;" />
                         </form>
                     </div>
                     <!-- 聊天输入框 -->
@@ -104,14 +84,7 @@
                         ></div>
                     </div>
                     <!-- 发送按钮 -->
-                    <el-button
-                        type="primary"
-                        size="small"
-                        class="send-btn"
-                        :class="chatInfoEn.state"
-                        @click="sendText()"
-                        :disabled="chatInfoEn.inputContent.length==0"
-                    >发送</el-button>
+                    <el-button type="primary" size="small" class="send-btn" :class="chatInfoEn.state" @click="sendText()" :disabled="chatInfoEn.inputContent.length==0">发送</el-button>
                 </div>
                 <!-- 离线 -->
                 <div v-show="chatInfoEn.state=='off' || chatInfoEn.state=='end'" class="off-wrapper">
@@ -136,22 +109,22 @@ import common_chat_emoji from './common_chat_emoji.vue';
 
 export default {
     components: {
-        commonChatEmoji: common_chat_emoji
+        commonChatEmoji: common_chat_emoji,
     },
     props: {
         chatInfoEn: {
             required: true,
             type: Object,
             default: {
-                inputContent: '',
-                msgList: []
-            }
+                inputContent: '', // 本次输入框的消息内容
+                msgList: [], // 消息集合
+            },
         },
         oprRoleName: {
             required: true,
             type: String,
-            default: ''
-        } // 操作者名称；e.g. server:服务端、client:客服端
+            default: '',
+        }, // 操作者名称；e.g. server:服务端、client:客服端
     },
     data() {
         return {
@@ -159,17 +132,24 @@ export default {
             selectionRange: null, // 输入框选中的区域
             shortcutMsgList: [], // 聊天区域的快捷回复列表
             imgViewDialogVisible: false, // 图片查看dialog的显示
-            imgViewDialog_imgSrc: '' // 图片查看dialog的图片地址
+            imgViewDialog_imgSrc: '', // 图片查看dialog的图片地址
+            chatLoaded: false, // chat是否已加载完毕
         };
     },
     computed: {},
     watch: {},
+    mounted() {
+        this.$nextTick(function () {
+            this.$data.chatLoaded = true;
+            this.init();
+        });
+    },
     methods: {
         /**
          * 初始化
          * @param {Object} opts 可选对象
          */
-        init: function(opts) {
+        init: function (opts) {
             var self = this;
             // 初始化状态
             document.getElementById('common_chat_input').innerHTML = '';
@@ -178,7 +158,7 @@ export default {
             // 在线状态
             if (this.chatInfoEn.state == 'on') {
                 // 1.显示在输入框的内容
-                setTimeout(function() {
+                setTimeout(function () {
                     // 未断开获取焦点
                     document.getElementById('common_chat_input').focus();
                     self.setInputContentSelectRange();
@@ -192,7 +172,7 @@ export default {
             }
 
             // 2.滚动到底部
-            this.$nextTick(function() {
+            this.$nextTick(function () {
                 self.$refs.common_chat_main.scrollTop = self.$refs.common_chat_main.scrollHeight;
                 document.getElementById('common_chat_input').focus();
             });
@@ -201,7 +181,7 @@ export default {
         /**
          * 发送文本
          */
-        sendText: function() {
+        sendText: function () {
             var self = this;
             if (self.chatInfoEn.inputContent.length == '') {
                 return;
@@ -209,10 +189,9 @@ export default {
             var msgContent = self.chatInfoEn.inputContent;
             document.getElementById('common_chat_input').innerHTML = '';
             self.setInputContentByDiv();
-
             this.sendMsg({
                 contentType: 'text',
-                content: msgContent
+                content: msgContent,
             });
         },
 
@@ -220,17 +199,17 @@ export default {
          * 设置输入内容
          * 根据input输入框innerHTML转换为纯文本
          */
-        setInputContentByDiv: function() {
+        setInputContentByDiv: function () {
             var self = this;
             var htmlStr = document.getElementById('common_chat_input').innerHTML;
 
             // 1.转换表情为纯文本：<img textanme="[笑]"/> => [笑]
-            var tmpInputContent = htmlStr.replace(/<img.+text=\"(.+?)\".+>/g, '[$1]').replace(/<.+?>/g, '');
+            var tmpInputContent = htmlStr.replace(/<img .+?text=\"(.+?)\".+?>/g, '[$1]').replace(/<.+?>/g, '');
 
             // 2.设置最长长度
             if (tmpInputContent.length > 500) {
                 document.getElementById('common_chat_input').innerHTML = '';
-                var value = tmpInputContent.substr(0, 499).replace(/\[(.+?)\]/g, function(item, value) {
+                var value = tmpInputContent.substr(0, 499).replace(/\[(.+?)\]/g, function (item, value) {
                     return self.$refs.qqemoji.getImgByFaceName(value);
                 });
                 this.setInputDiv(value);
@@ -244,7 +223,7 @@ export default {
          * 设置input输入框内容
          * @param {String} vlaue 设置的值
          */
-        setInputDiv: function(value) {
+        setInputDiv: function (value) {
             if (this.$data.selectionRange == null) {
                 document.getElementById('common_chat_input').focus();
                 return;
@@ -305,20 +284,21 @@ export default {
         /**
          * 转换为QQ表情
          */
-        getqqemojiEmoji: function(value) {
+        getqqemojiEmoji: function (value) {
             if (value == undefined) {
                 return;
             }
             var self = this;
-            return value.replace(/\[(.+?)\]/g, function(item, value) {
+            let rs = value.replace(/\[(.+?)\]/g, function (item, value) {
                 return self.$refs.qqemoji.getImgByFaceName(value);
             });
+            return rs;
         },
 
         /**
          * 设置input输入框的选择焦点
          */
-        setInputContentSelectRange: function() {
+        setInputContentSelectRange: function () {
             if (window.getSelection && window.getSelection().rangeCount > 0) {
                 var selectRange = window.getSelection().getRangeAt(0);
                 if (
@@ -338,14 +318,14 @@ export default {
         /**
          * 输入框的mouseup
          */
-        inputContent_mouseup: function(e) {
+        inputContent_mouseup: function (e) {
             this.setInputContentSelectRange();
         },
 
         /**
          * 输入框的keydown
          */
-        inputContent_keydown: function(e) {
+        inputContent_keydown: function (e) {
             // keyup触发时，绑定的数据还没有被变更，需要进行延后访问
             this.setInputContentSelectRange();
             clearTimeout(this.$data.inputContent_setTimeout);
@@ -362,7 +342,7 @@ export default {
         /**
          * 输入框的粘贴
          */
-        inputContent_paste: function(e) {
+        inputContent_paste: function (e) {
             var self = this;
             var isImage = false;
             if (e.clipboardData && e.clipboardData.items.length > 0) {
@@ -378,16 +358,14 @@ export default {
                             url: '/upload',
                             params: formData,
                             successCallback: (rs) => {
-                                console.log(file);
-                                console.log(rs);
                                 document.getElementById('common_chat_opr_fileUpload').value = '';
                                 this.sendMsg({
                                     contentType: 'image',
                                     fileName: rs.fileName,
                                     fileUrl: rs.fileUrl,
-                                    state: 'success'
+                                    state: 'success',
                                 });
-                            }
+                            },
                         });
                         isImage = true;
                     }
@@ -400,13 +378,7 @@ export default {
                     var span = document.createElement('span');
                     span.innerHTML = str;
                     var txt = span.innerText;
-                    this.setInputDiv(
-                        txt
-                            .replace(/\n/g, '')
-                            .replace(/\r/g, '')
-                            .replace(/</g, '&lt;')
-                            .replace(/>/g, '&gt;')
-                    );
+                    this.setInputDiv(txt.replace(/\n/g, '').replace(/\r/g, '').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
                 }
             }
             e.stopPropagation();
@@ -416,7 +388,7 @@ export default {
         /**
          * 文件上传_点击
          */
-        fileUpload_click: function(fileType) {
+        fileUpload_click: function (fileType) {
             document.getElementById('common_chat_opr_fileUpload').onchange = this.fileUpload_change;
             document.getElementById('common_chat_opr_fileUpload').click();
         },
@@ -424,7 +396,7 @@ export default {
         /**
          * 文件上传_选中文件
          */
-        fileUpload_change: function(e) {
+        fileUpload_change: function (e) {
             var fileNameIndex = document.getElementById('common_chat_opr_fileUpload').value.lastIndexOf('\\') + 1;
             var fileName = document.getElementById('common_chat_opr_fileUpload').value.substr(fileNameIndex);
             var extend = fileName.substring(fileName.lastIndexOf('.') + 1);
@@ -443,22 +415,21 @@ export default {
                 url: '/upload',
                 params: formData,
                 successCallback: (rs) => {
-                    console.log(rs);
                     document.getElementById('common_chat_opr_fileUpload').value = '';
                     this.sendMsg({
                         contentType: ['png', 'jpg', 'jpeg', 'gif', 'bmp'].indexOf(extend) >= 0 ? 'image' : 'file',
                         fileName: fileName,
                         fileUrl: rs.fileUrl,
-                        state: 'success'
+                        state: 'success',
                     });
-                }
+                },
             });
         },
 
         /**
          * qqemoji选中表情
          */
-        qqemoji_selectFace: function(rs) {
+        qqemoji_selectFace: function (rs) {
             var imgStr = rs.imgStr;
             this.setInputDiv(imgStr);
         },
@@ -467,7 +438,7 @@ export default {
          * 转换文件名，若文件名称超过9个字符，将进行截取处理
          * @param {String} fileName 文件名称
          */
-        getFileName: function(fileName) {
+        getFileName: function (fileName) {
             if (!fileName) {
                 return;
             }
@@ -482,7 +453,7 @@ export default {
         /**
          * 图片查看dialog_显示
          */
-        imgViewDialog_show: function(item) {
+        imgViewDialog_show: function (item) {
             this.$data.imgViewDialogVisible = true;
             this.$data.imgViewDialog_imgSrc = item.fileUrl;
         },
@@ -490,10 +461,10 @@ export default {
         /**
          * 图片查看dialog_显示
          */
-        imgViewDialog_close: function() {
+        imgViewDialog_close: function () {
             this.$data.imgViewDialogVisible = false;
             var self = this;
-            setTimeout(function() {
+            setTimeout(function () {
                 self.$data.imgViewDialog_imgSrc = '';
             }, 100);
         },
@@ -501,9 +472,9 @@ export default {
         /**
          * 输入框的拖拽
          */
-        inputContent_drop: function(e) {
+        inputContent_drop: function (e) {
             var self = this;
-            setTimeout(function() {
+            setTimeout(function () {
                 self.setInputContentByDiv();
             }, 100);
         },
@@ -512,44 +483,39 @@ export default {
          * 发送消息，e.g. 文本、图片、文件
          * @param {Object} msg 消息对象
          */
-        sendMsg: function(msg) {
+        sendMsg: function (msg) {
             var self = this;
             // 1.传递
             this.$emit('sendMsg', {
                 msg: msg,
-                successCallbcak: function() {
+                successCallbcak: function () {
                     document.getElementById('common_chat_input').focus();
                     self.goEnd();
-                }
+                },
             });
         },
 
         /**
          * 传递回调
          */
-        chatCallback: function(emitType, data) {
+        chatCallback: function (emitType, data) {
             this.$emit('chatCallback', {
                 eventType: emitType,
-                data: data
+                data: data,
             });
         },
 
         /**
          * 聊天记录滚动到底部
          */
-        goEnd: function() {
+        goEnd: function () {
             this.$nextTick(() => {
                 setTimeout(() => {
                     this.$refs.common_chat_main.scrollTop = this.$refs.common_chat_main.scrollHeight;
                 }, 100);
             });
-        }
+        },
     },
-    mounted() {
-        this.$nextTick(function() {
-            this.init();
-        });
-    }
 };
 </script>
 <style lang="less">
