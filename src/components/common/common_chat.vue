@@ -327,7 +327,6 @@ export default {
          */
         inputContent_keydown: function (e) {
             // keyup触发时，绑定的数据还没有被变更，需要进行延后访问
-            this.setInputContentSelectRange();
             clearTimeout(this.$data.inputContent_setTimeout);
             this.$data.inputContent_setTimeout = setTimeout(() => {
                 this.setInputContentByDiv();
@@ -336,6 +335,7 @@ export default {
                 if (e.keyCode == 13) {
                     this.sendText();
                 }
+                this.setInputContentSelectRange();
             }, 1);
         },
 

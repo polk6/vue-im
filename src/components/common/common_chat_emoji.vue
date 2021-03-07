@@ -1,15 +1,14 @@
 <!-- qq表情 -->
 <template>
     <div class="common_chat_emoji-wrapper common_chat_emoji-wrapper-global">
-        <a href="javascript:void(0)" @click="toggleFaceHidden">
+        <div  @click="toggleFaceHidden">
             <i class="iconfont fa fa-smile-o float-left"></i>
-        </a>
+        </div>
         <div class="list-wrapper" v-show="!faceHidden">
             <div class="list-inner" @click="selectFace">
                 <a v-for="(item, index)  in qqemojiList" :key="index" class="item qqemoji" :title="item" :text="[item]" :class="'qqemoji'+index"></a>
             </div>
         </div>
-        <input type="text" id="imLog_qqemoji_txt" @blur="hideFaceWrapper" style="width:0px;height:0px;border: 0px;" />
     </div>
 </template>
 
@@ -27,9 +26,6 @@ export default {
          */
         toggleFaceHidden: function() {
             this.$data.faceHidden = !this.$data.faceHidden;
-            if (!this.$data.faceHidden) {
-                document.getElementById('imLog_qqemoji_txt').focus();
-            }
         },
 
         /**
